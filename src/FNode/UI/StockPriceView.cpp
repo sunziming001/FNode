@@ -92,6 +92,7 @@ void StockPriceView::startAnalysis()
 {
 	
 	analysisThread_ = std::thread([this]() {
+		btnAnalysis_->setEnabled(false);
 		emit sigClearOutput();
 
 		emit sigAppendOutput("start analysis...");
@@ -160,9 +161,9 @@ void StockPriceView::startAnalysis()
 			
 		}
 		emit sigAppendOutput("analysis over");
-
+		btnAnalysis_->setEnabled(true);
 	});
-
+	analysisThread_.detach();
 }
 
 void StockPriceView::startRank()
@@ -222,9 +223,9 @@ void StockPriceView::startRank()
 void StockPriceView::getNegativeJ()
 {
 	getNegativeJThread_ = std::thread([this]() {
+		btnGetNegativeJ_->setEnabled(false);
 		emit sigClearOutput();
 		emit sigAppendOutput("start get negative J...");
-
 		QList<QString> stockList = StockDataBase::getInstance()->getStockList();
 		int matchCnt = 0;
 		int winCnt = 0;
@@ -252,7 +253,9 @@ void StockPriceView::getNegativeJ()
 		}
 
 		emit sigAppendOutput("get negative J over");
+		btnGetNegativeJ_->setEnabled(true);
 	});
+	getNegativeJThread_.detach();
 }
 
 void StockPriceView::onAppendOutput(const QString& str)
