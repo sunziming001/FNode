@@ -239,7 +239,11 @@ void StockPriceView::getNegativeJ()
 				if (J < 0.0)
 				{
 					double marketValue = prices.last().getMarketValue();
-					QString output = *iter + " J: " + QString::number(J) + ", market: " + QString::number(marketValue/100000000.0);
+					double changeRate = prices.last().getChangeRate();
+					QString output = *iter + " J: " + QString::number(J,'f',2) 
+						+ ", market: " + QString::number(marketValue / 100000000.0,'f',2)
+						+ ", changeRate: " + QString::number(changeRate* 100, 'f', 2)+"%"
+						;
 					emit sigAppendOutput(output);
 				}
 			}
