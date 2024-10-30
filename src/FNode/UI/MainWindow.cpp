@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
 	this->setWindowFlags(Qt::Window);
 	initUI();
+	initTimers();
 }
 
 MainWindow::~MainWindow()
@@ -39,6 +40,16 @@ void MainWindow::initUI()
 	initDividendFrame();
 	initPriceFrame();
 	initHolderFrame();
+}
+
+void MainWindow::initTimers()
+{
+	priceTimer_.setSingleShot(false);
+	priceTimer_.setInterval(1000*60 );
+
+	connect(&priceTimer_, &QTimer::timeout, this, &MainWindow::onPriceTimeOut);
+
+	priceTimer_.start();
 }
 
 void MainWindow::initTabLayout()
@@ -111,6 +122,35 @@ void MainWindow::onSwitchView(int id, bool checked)
 			break;
 		}
 	}
+}
+
+void MainWindow::onPriceTimeOut()
+{
+	QDateTime curDateTime = QDateTime::currentDateTime();
+	int dayOfWeek = curDateTime.date().dayOfWeek();
+	int hour = curDateTime.time().hour();
+	int minutes = curDateTime.time().minute();
+
+	if (dayOfWeek > 5)
+		return;
+
+	if ((hour == 11 && minutes == 30)
+		|| (hour==15 && minutes == 0))
+	{
+		priceOnceConnect_ = new QMetaObject::Connection;
+			
+		*priceOnceConnect_=	connect(this, &MainWindow::sigTaskFinished, this, [this]() {
+
+			priceFrame_->getNegativeJ();
+
+			QObject::disconnect(*priceOnceConnect_);
+			delete priceOnceConnect_;
+			priceOnceConnect_ = nullptr;
+		},Qt::QueuedConnection);
+		clearPrice();
+		startPrice();
+	}
+
 }
 
 void MainWindow::initProgressLayout()
@@ -277,6 +317,7 @@ void MainWindow::freshProgress()
 			finishedTasksCnt_ = 0;
 			totalTaskCnt_ = 0;
 			lbProgress_->setText(tr("no tasks"));
+			emit sigTaskFinished();
 		}
 		else {
 			QString text = QString::number(finishedTasksCnt_) + "/" + QString::number(totalTaskCnt_);

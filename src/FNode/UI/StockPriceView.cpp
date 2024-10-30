@@ -1,7 +1,8 @@
 #include "StockPriceView.h"
 #include "MainWindow.h"
 #include "StockDatabase.h"
-#include "QDate"
+#include <QDateTime>
+#include <QDir>
 
 StockPriceView::StockPriceView(QWidget* parent /*= nullptr*/)
 	:QFrame(parent)
@@ -84,8 +85,9 @@ void StockPriceView::initConsoleOutput()
 	consoleOutput_->setReadOnly(true);
 	mainLayout_->addWidget(consoleOutput_);
 
-	connect(this, &StockPriceView::sigAppendOutput, this, &StockPriceView::onAppendOutput);
-	connect(this, &StockPriceView::sigClearOutput, consoleOutput_, &QTextEdit::clear);
+	connect(this, &StockPriceView::sigAppendOutput, this, &StockPriceView::onAppendOutput, Qt::QueuedConnection);
+	connect(this, &StockPriceView::sigClearOutput, consoleOutput_, &QTextEdit::clear, Qt::QueuedConnection);
+	connect(this, &StockPriceView::sigSaveOutput, this, &StockPriceView::onSaveOutput, Qt::QueuedConnection);
 }
 
 void StockPriceView::startAnalysis()
@@ -93,6 +95,9 @@ void StockPriceView::startAnalysis()
 	
 	analysisThread_ = std::thread([this]() {
 		btnAnalysis_->setEnabled(false);
+		QString fileName = "analysis_";
+		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
+		fileName += ".txt";
 		emit sigClearOutput();
 
 		emit sigAppendOutput("start analysis...");
@@ -161,6 +166,7 @@ void StockPriceView::startAnalysis()
 			
 		}
 		emit sigAppendOutput("analysis over");
+		emit sigSaveOutput(fileName);
 		btnAnalysis_->setEnabled(true);
 	});
 	analysisThread_.detach();
@@ -224,6 +230,10 @@ void StockPriceView::getNegativeJ()
 {
 	getNegativeJThread_ = std::thread([this]() {
 		btnGetNegativeJ_->setEnabled(false);
+		QString fileName = "NegativeJ_";
+		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
+		fileName += ".txt";
+
 		emit sigClearOutput();
 		emit sigAppendOutput("start get negative J...");
 		QList<QString> stockList = StockDataBase::getInstance()->getStockList();
@@ -253,6 +263,7 @@ void StockPriceView::getNegativeJ()
 		}
 
 		emit sigAppendOutput("get negative J over");
+		emit sigSaveOutput(fileName);
 		btnGetNegativeJ_->setEnabled(true);
 	});
 	getNegativeJThread_.detach();
@@ -264,6 +275,17 @@ void StockPriceView::onAppendOutput(const QString& str)
 	{
 		consoleOutput_->append(str);
 	}
+}
+
+void StockPriceView::onSaveOutput(const QString& fileName)
+{
+	QDir().mkdir("record");
+	QFile file(QString("record\\") + fileName);
+	file.open(QIODevice::ReadWrite);
+
+	file.write(consoleOutput_->toPlainText().toUtf8());
+
+	file.close();
 }
 
 QMap<QString, int> StockPriceView::getTopVolumeStock(const QDate& endDate, int dayCnt, int outputCnt, double minChangeRate /*= 4.5*/, bool hasOutput /*= false*/)

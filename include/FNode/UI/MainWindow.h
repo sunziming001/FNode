@@ -12,6 +12,7 @@
 #include <QCheckBox>
 #include <QButtonGroup>
 #include <QStackedLayout>
+#include <QTimer>
 
 
 class StockSearchFrame;
@@ -36,8 +37,11 @@ public slots:
 	void clearPrice();
 
 	void startCrawelHolders();
+signals:
+	void sigTaskFinished();
 private:
 	void initUI();
+	void initTimers();
 
 	void initTabLayout();
 	void initStackedLayout();
@@ -49,6 +53,7 @@ private:
 	void freshProgress();
 private slots:
 	void onSwitchView(int id, bool checked);
+	void onPriceTimeOut();
 private:
 	QVBoxLayout *mainLayout_=nullptr;
 	QHBoxLayout* tabLayout_ = nullptr;
@@ -75,6 +80,9 @@ private:
 
 	int totalTaskCnt_ = 0;
 	int finishedTasksCnt_ = 0;
+
+	QTimer priceTimer_;
+	QMetaObject::Connection* priceOnceConnect_=nullptr;
 };
 
 #endif

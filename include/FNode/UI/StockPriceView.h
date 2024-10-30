@@ -15,9 +15,11 @@ class StockPriceView :public QFrame
 public:
 	StockPriceView(QWidget* parent = nullptr);
 	~StockPriceView();
+	void getNegativeJ();
 signals:
 	void sigAppendOutput(const QString& str);
 	void sigClearOutput();
+	void sigSaveOutput(const QString& fileName);
 private:
 	void initUI();
 	void initCtrlLayout();
@@ -25,9 +27,8 @@ private:
 
 	void startAnalysis();
 	void startRank();
-	void getNegativeJ();
 	void onAppendOutput(const QString& str);
-
+	void onSaveOutput(const QString& fileName);
 	QMap<QString, int> getTopVolumeStock(const QDate& endDate, int dayCnt, int outputCnt, double minChangeRate = 4.5, bool hasOutput = false);
 private:
 	QVBoxLayout* mainLayout_;
@@ -44,6 +45,7 @@ private:
 
 	std::thread analysisThread_;
 	std::thread getNegativeJThread_;
+
 };
 
 
