@@ -155,6 +155,32 @@ double StockPrice::GetSumChangeRate(const QList<StockPrice>& source, unsigned in
 	return ret;
 }
 
+QList<double> StockPrice::GetSMA20(const QList<StockPrice>& source)
+{
+	QList<double> ret;
+	for (int i = 0; i < source.size(); i++)
+	{
+		double closeSum = 0.0;
+		double curValue = 0.0;
+		int closeCount = 0;
+		int curIndx = i;
+		double minPrice = 0.0;
+		double maxPrice = 0.0;
+
+		while (curIndx >= 0 && curIndx >= i - 20)
+		{
+			closeSum += source.at(curIndx).getClosePrice();
+			closeCount++;
+			curIndx--;
+		}
+
+		curValue = closeSum / closeCount;
+		ret.append(curValue);
+	}
+
+	return ret;
+}
+
 QList<double> StockPrice::GetRSV(const QList<StockPrice>& source)
 {
 	QList<double> ret;

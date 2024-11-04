@@ -16,6 +16,7 @@ public:
 	static double GetPrevLowest(const QList<StockPrice>& source, unsigned int idx, unsigned int dur);
 	static double GetPriceStdDev(const QList<StockPrice>& source, unsigned int idx, unsigned int dur);
 	static double GetSumChangeRate(const QList<StockPrice>& source, unsigned int idx, unsigned int dur);
+	static QList<double> GetSMA20(const QList<StockPrice>& source);
 	static QList<double> GetRSV(const QList<StockPrice>& source);
 	static QList<double> GetK(const QList<StockPrice>& source);
 	static QList<std::pair<double,double>> GetKD(const QList<StockPrice>& source);

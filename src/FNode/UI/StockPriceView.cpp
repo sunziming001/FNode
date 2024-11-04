@@ -236,11 +236,16 @@ void StockPriceView::getNegativeJ()
 
 		emit sigClearOutput();
 		emit sigAppendOutput("start get negative J...");
+		emit sigAppendOutput("the smaller J the better.");
+		emit sigAppendOutput("the bigger market the better.");
+		emit sigAppendOutput("the bigger MaUpTrend the better.");
+		emit sigAppendOutput("changeRate not over 10%.");
 		QList<QString> stockList = StockDataBase::getInstance()->getStockList();
 		int matchCnt = 0;
 		int winCnt = 0;
 		for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 		{
+			double maUpTrend = 0.0;
 			QString stockId = *iter;
 			QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceById(stockId);
 			QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(prices);
@@ -249,13 +254,23 @@ void StockPriceView::getNegativeJ()
 				double J = std::get<2>(kdj.last());
 				if (J < 0.0)
 				{
+					QList<double> sma20 = StockPrice::GetSMA20(prices);
 					double marketValue = prices.last().getMarketValue();
 					double changeRate = prices.last().getChangeRate();
-					QString output = *iter + " J: " + QString::number(J,'f',2) 
-						+ ", market: " + QString::number(marketValue / 100000000.0,'f',2)
-						+ ", changeRate: " + QString::number(changeRate* 100, 'f', 2)+"%"
+					QString output = *iter + " J: " + QString::number(J, 'f', 2)
+						+ ", market: " + QString::number(marketValue / 100000000.0, 'f', 2)
+						+ ", changeRate: " + QString::number(changeRate * 100, 'f', 2) + "%"
 						;
-					emit sigAppendOutput(output);
+					if (sma20.size() >= 2)
+					{
+						double last = sma20.last();
+						double prev = sma20.at(sma20.size() - 2);
+						maUpTrend = (last - prev) / prev;
+						output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
+					}
+
+					if(maUpTrend>0.0)
+						emit sigAppendOutput(output);
 				}
 			}
 
