@@ -1,7 +1,7 @@
 .vs/
 Debug/
 Release/
-*.user
+*.vcxproj.user
 stock.db
 obj/
 *.rar
