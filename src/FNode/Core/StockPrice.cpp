@@ -167,7 +167,7 @@ QList<double> StockPrice::GetSMA20(const QList<StockPrice>& source)
 		double minPrice = 0.0;
 		double maxPrice = 0.0;
 
-		while (curIndx >= 0 && curIndx >= i - 20)
+		while (curIndx >= 0 && curIndx > i - 20)
 		{
 			closeSum += source.at(curIndx).getClosePrice();
 			closeCount++;
