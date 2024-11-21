@@ -130,12 +130,14 @@ void MainWindow::onPriceTimeOut()
 	int dayOfWeek = curDateTime.date().dayOfWeek();
 	int hour = curDateTime.time().hour();
 	int minutes = curDateTime.time().minute();
+	bool isEndOfDay = (hour == 15 && minutes == 0);
+	bool isEndOfWeek = (dayOfWeek == 5)&& (hour == 16 && minutes == 0);
 
 	if (dayOfWeek > 5)
 		return;
 
-	if ((hour == 11 && minutes == 30)
-		|| (hour==15 && minutes == 0))
+	if (isEndOfDay
+		|| isEndOfWeek)
 	{
 		priceOnceConnect_ = new QMetaObject::Connection;
 			
@@ -147,8 +149,15 @@ void MainWindow::onPriceTimeOut()
 			delete priceOnceConnect_;
 			priceOnceConnect_ = nullptr;
 		},Qt::QueuedConnection);
+
+		priceFrame_->setIsWeek(isEndOfWeek);
 		clearPrice();
 		startPrice();
+	}
+
+	if (hour == 16 && minutes == 0)
+	{
+
 	}
 
 }
@@ -251,7 +260,15 @@ void MainWindow::startPrice()
 		
 		StockPriceTask* tsk = new StockPriceTask(this);
 		tsk->setStockId(stockId);
+		if (priceFrame_->isWeek())
+		{
+			tsk->setKType(StockPriceTask::KType::Week);
+		}
 
+		if (priceFrame_->isMonth())
+		{
+			tsk->setKType(StockPriceTask::KType::Month);
+		}
 		totalTaskCnt_++;
 
 

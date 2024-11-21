@@ -8,6 +8,13 @@
 class StockPriceTask :public AbstractNetTask
 {
 public:
+enum class KType
+{
+	Day,
+	Week,
+	Month,
+};
+public:
 	StockPriceTask(QObject* parent = nullptr);
 	~StockPriceTask();
 
@@ -15,6 +22,7 @@ public:
 	void setStockId(QString stockId);
 
 	void notifyFinish(bool isError = false, QString errInfo = QString());
+	void setKType(KType t);
 private:
 	void onExecute()override;
 
@@ -24,6 +32,7 @@ private:
 	QString stockId_;
 
 	QNetworkReply* priceReply_ = nullptr;
+	KType kType_ = KType::Day;
 };
 
 

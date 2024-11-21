@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <thread>
+#include <QCheckBox>
+#include <QButtonGroup>
 
 class StockPriceView :public QFrame
 {
@@ -16,6 +18,10 @@ public:
 	StockPriceView(QWidget* parent = nullptr);
 	~StockPriceView();
 	void getNegativeJ();
+	void setIsWeek(bool v);
+	void setIsMonth(bool v);
+	bool isWeek()const;
+	bool isMonth()const;
 signals:
 	void sigAppendOutput(const QString& str);
 	void sigClearOutput();
@@ -35,6 +41,10 @@ private:
 	QHBoxLayout* ctrlLayout_;
 
 	QPushButton* btnCrawlPrice_;
+	QButtonGroup bgWeekMonth_;
+	QCheckBox* cbUseDay_;
+	QCheckBox* cbUseWeek_;
+	QCheckBox* cbUseMonth_;
 	QPushButton* btnClearPrice_;
 	QPushButton* btnAnalysis_;
 	QPushButton* btnGetNegativeJ_;

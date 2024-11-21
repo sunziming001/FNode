@@ -5,7 +5,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
-QString StockPriceTask::PriceUrlFormat="https://16.push2his.eastmoney.com/api/qt/stock/kline/get?secid=%s.%s&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&end=20500101&lmt=120&_=1686031957995";
+QString StockPriceTask::PriceUrlFormat="https://16.push2his.eastmoney.com/api/qt/stock/kline/get?secid=%s.%s&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=%s&fqt=1&end=20500101&lmt=120&_=1686031957995";
 //ref https://quote.eastmoney.com/sh600839.html
 StockPriceTask::StockPriceTask(QObject* parent /*= nullptr*/)
 	:AbstractNetTask(parent)
@@ -22,12 +22,29 @@ QString StockPriceTask::getPriceUrl() const
 {
 	QString ret;
 	QString header = "0";
+	QString kTypeStr = "101";
 	if (stockId_.startsWith("688")
 		|| stockId_.startsWith("60"))
 	{
 		header = "1";
 	}
-	ret.sprintf(PriceUrlFormat.toStdString().c_str(), header.toStdString().c_str(), stockId_.toStdString().c_str());
+
+	switch (kType_)
+	{
+	case StockPriceTask::KType::Day:
+		kTypeStr = "101";
+		break;
+	case StockPriceTask::KType::Week:
+		kTypeStr = "102";
+		break;
+	case StockPriceTask::KType::Month:
+		kTypeStr = "103";
+		break;
+	default:
+		break;
+	}
+
+	ret.sprintf(PriceUrlFormat.toStdString().c_str(), header.toStdString().c_str(), stockId_.toStdString().c_str(), kTypeStr.toStdString().c_str());
 	return ret;
 }
 
@@ -39,6 +56,11 @@ void StockPriceTask::setStockId(QString stockId)
 void StockPriceTask::notifyFinish(bool isError /*= false*/, QString errInfo /*= QString()*/)
 {
 	emit finished(isError, errInfo);
+}
+
+void StockPriceTask::setKType(KType t)
+{
+	kType_ = t;
 }
 
 void StockPriceTask::onExecute()

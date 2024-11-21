@@ -41,6 +41,10 @@ void StockPriceView::initCtrlLayout()
 	mainLayout_->addLayout(ctrlLayout_);
 
 	btnCrawlPrice_ = new QPushButton(tr("CrawlPrice"), this);
+	cbUseDay_ = new QCheckBox(tr("Day"), this);
+	cbUseWeek_ = new QCheckBox(tr("Week"), this);
+	cbUseMonth_ = new QCheckBox(tr("Month"), this);
+
 	btnClearPrice_ = new QPushButton(tr("ClearPrice"), this);
 	btnAnalysis_ = new QPushButton(tr("Analysis"), this);
 	btnGetNegativeJ_ = new QPushButton(tr("NegativeJ"), this);
@@ -58,6 +62,9 @@ void StockPriceView::initCtrlLayout()
 	leDuration_->setFixedWidth(35);
 
 	ctrlLayout_->addWidget(btnCrawlPrice_);
+	ctrlLayout_->addWidget(cbUseDay_);
+	ctrlLayout_->addWidget(cbUseWeek_);
+	ctrlLayout_->addWidget(cbUseMonth_);
 	ctrlLayout_->addWidget(btnClearPrice_);
 	ctrlLayout_->addWidget(btnAnalysis_);
 	ctrlLayout_->addWidget(btnGetNegativeJ_);
@@ -67,6 +74,13 @@ void StockPriceView::initCtrlLayout()
 	ctrlLayout_->addWidget(btnRank_);
 
 	ctrlLayout_->addStretch(1);
+
+
+	bgWeekMonth_.addButton(cbUseWeek_);
+	bgWeekMonth_.addButton(cbUseMonth_);
+	bgWeekMonth_.addButton(cbUseDay_);
+	bgWeekMonth_.setExclusive(true);
+	
 
 	if (mainWnd)
 	{
@@ -230,7 +244,17 @@ void StockPriceView::getNegativeJ()
 {
 	getNegativeJThread_ = std::thread([this]() {
 		btnGetNegativeJ_->setEnabled(false);
-		QString fileName = "NegativeJ_";
+		QString fileName = "NegativeJ_Day";
+		if (isWeek())
+		{
+			fileName = "NegativeJ_Week_";
+		}
+		else if (isMonth())
+		{
+			fileName = "NegativeJ_Month_";
+		}
+
+		
 		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
 		fileName += ".txt";
 
@@ -282,6 +306,26 @@ void StockPriceView::getNegativeJ()
 		btnGetNegativeJ_->setEnabled(true);
 	});
 	getNegativeJThread_.detach();
+}
+
+void StockPriceView::setIsWeek(bool v)
+{
+	cbUseWeek_->setChecked(v);
+}
+
+void StockPriceView::setIsMonth(bool v)
+{
+	cbUseMonth_->setChecked(v);
+}
+
+bool StockPriceView::isWeek() const
+{
+	return cbUseWeek_->isChecked();
+}
+
+bool StockPriceView::isMonth() const
+{
+	return cbUseMonth_->isChecked();
 }
 
 void StockPriceView::onAppendOutput(const QString& str)
