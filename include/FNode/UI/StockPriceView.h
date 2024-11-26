@@ -18,6 +18,7 @@ public:
 	StockPriceView(QWidget* parent = nullptr);
 	~StockPriceView();
 	void getNegativeJ();
+	void setIsDay(bool v);
 	void setIsWeek(bool v);
 	void setIsMonth(bool v);
 	bool isWeek()const;

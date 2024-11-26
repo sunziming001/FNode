@@ -150,6 +150,7 @@ void MainWindow::onPriceTimeOut()
 			priceOnceConnect_ = nullptr;
 		},Qt::QueuedConnection);
 
+		priceFrame_->setIsDay(true);
 		priceFrame_->setIsWeek(isEndOfWeek);
 		clearPrice();
 		startPrice();

@@ -308,6 +308,11 @@ void StockPriceView::getNegativeJ()
 	getNegativeJThread_.detach();
 }
 
+void StockPriceView::setIsDay(bool v)
+{
+	cbUseDay_->setChecked(v);
+}
+
 void StockPriceView::setIsWeek(bool v)
 {
 	cbUseWeek_->setChecked(v);
