@@ -293,7 +293,7 @@ void StockPriceView::getNegativeJ()
 						output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
 					}
 
-					if(maUpTrend>0.0)
+					if(maUpTrend>0.0 || isMonth() || isWeek())
 						emit sigAppendOutput(output);
 				}
 			}
