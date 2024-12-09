@@ -59,6 +59,8 @@ private:
 	QHBoxLayout* tabLayout_ = nullptr;
 	QStackedLayout* stackedLayout_ = nullptr;
 
+	QCheckBox* cbAutoTask_ = nullptr;
+
 	QCheckBox* cbDividen_ = nullptr;
 	QCheckBox* cbPrice_ = nullptr;
 	QCheckBox* cbHolders_ = nullptr;

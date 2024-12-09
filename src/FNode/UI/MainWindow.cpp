@@ -31,7 +31,11 @@ MainWindow::~MainWindow()
 void MainWindow::initUI()
 {
 	mainLayout_ = new QVBoxLayout();
+	cbAutoTask_ = new QCheckBox(tr("Auto"), this);
 	this->setLayout(mainLayout_);
+
+	mainLayout_->addWidget(cbAutoTask_);
+	cbAutoTask_->setChecked(true);
 
 	initTabLayout();
 	initStackedLayout();
@@ -133,8 +137,11 @@ void MainWindow::onPriceTimeOut()
 	bool isEndOfDay = (hour == 15 && minutes == 0);
 	bool isEndOfWeek = (dayOfWeek == 5)&& (hour == 16 && minutes == 0);
 
-	if (dayOfWeek > 5)
+	if (dayOfWeek > 5 || !cbAutoTask_->isChecked())
+	{
 		return;
+	}
+		
 
 	if (isEndOfDay
 		|| isEndOfWeek)
@@ -154,11 +161,6 @@ void MainWindow::onPriceTimeOut()
 		priceFrame_->setIsWeek(isEndOfWeek);
 		clearPrice();
 		startPrice();
-	}
-
-	if (hour == 16 && minutes == 0)
-	{
-
 	}
 
 }
@@ -270,6 +272,12 @@ void MainWindow::startPrice()
 		{
 			tsk->setKType(StockPriceTask::KType::Month);
 		}
+
+		if (priceFrame_->isSeason())
+		{
+			tsk->setKType(StockPriceTask::KType::Season);
+		}
+
 		totalTaskCnt_++;
 
 

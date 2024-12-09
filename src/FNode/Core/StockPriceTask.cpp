@@ -40,6 +40,9 @@ QString StockPriceTask::getPriceUrl() const
 	case StockPriceTask::KType::Month:
 		kTypeStr = "103";
 		break;
+	case StockPriceTask::KType::Season:
+		kTypeStr = "104";
+		break;
 	default:
 		break;
 	}

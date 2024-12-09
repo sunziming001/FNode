@@ -44,6 +44,7 @@ void StockPriceView::initCtrlLayout()
 	cbUseDay_ = new QCheckBox(tr("Day"), this);
 	cbUseWeek_ = new QCheckBox(tr("Week"), this);
 	cbUseMonth_ = new QCheckBox(tr("Month"), this);
+	cbUseSeason_ = new QCheckBox(tr("Season"), this);
 
 	btnClearPrice_ = new QPushButton(tr("ClearPrice"), this);
 	btnAnalysis_ = new QPushButton(tr("Analysis"), this);
@@ -65,6 +66,7 @@ void StockPriceView::initCtrlLayout()
 	ctrlLayout_->addWidget(cbUseDay_);
 	ctrlLayout_->addWidget(cbUseWeek_);
 	ctrlLayout_->addWidget(cbUseMonth_);
+	ctrlLayout_->addWidget(cbUseSeason_);
 	ctrlLayout_->addWidget(btnClearPrice_);
 	ctrlLayout_->addWidget(btnAnalysis_);
 	ctrlLayout_->addWidget(btnGetNegativeJ_);
@@ -76,6 +78,7 @@ void StockPriceView::initCtrlLayout()
 	ctrlLayout_->addStretch(1);
 
 
+	bgWeekMonth_.addButton(cbUseSeason_);
 	bgWeekMonth_.addButton(cbUseWeek_);
 	bgWeekMonth_.addButton(cbUseMonth_);
 	bgWeekMonth_.addButton(cbUseDay_);
@@ -253,6 +256,10 @@ void StockPriceView::getNegativeJ()
 		{
 			fileName = "NegativeJ_Month_";
 		}
+		else if (isSeason())
+		{
+			fileName = "NegativeJ_Season_";
+		}
 
 		
 		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
@@ -293,8 +300,14 @@ void StockPriceView::getNegativeJ()
 						output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
 					}
 
-					if(maUpTrend>0.0 || isMonth() || isWeek())
+					if (maUpTrend > 0.0
+						|| isMonth()
+						|| isWeek()
+						|| isSeason())
+					{
 						emit sigAppendOutput(output);
+					}
+						
 				}
 			}
 
@@ -323,6 +336,11 @@ void StockPriceView::setIsMonth(bool v)
 	cbUseMonth_->setChecked(v);
 }
 
+void StockPriceView::setIsSeason(bool v)
+{
+	cbUseSeason_->setChecked(v);
+}
+
 bool StockPriceView::isWeek() const
 {
 	return cbUseWeek_->isChecked();
@@ -331,6 +349,11 @@ bool StockPriceView::isWeek() const
 bool StockPriceView::isMonth() const
 {
 	return cbUseMonth_->isChecked();
+}
+
+bool StockPriceView::isSeason() const
+{
+	return cbUseSeason_->isChecked();
 }
 
 void StockPriceView::onAppendOutput(const QString& str)

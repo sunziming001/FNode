@@ -21,8 +21,10 @@ public:
 	void setIsDay(bool v);
 	void setIsWeek(bool v);
 	void setIsMonth(bool v);
+	void setIsSeason(bool v);
 	bool isWeek()const;
 	bool isMonth()const;
+	bool isSeason()const;
 signals:
 	void sigAppendOutput(const QString& str);
 	void sigClearOutput();
@@ -46,6 +48,7 @@ private:
 	QCheckBox* cbUseDay_;
 	QCheckBox* cbUseWeek_;
 	QCheckBox* cbUseMonth_;
+	QCheckBox* cbUseSeason_;
 	QPushButton* btnClearPrice_;
 	QPushButton* btnAnalysis_;
 	QPushButton* btnGetNegativeJ_;
