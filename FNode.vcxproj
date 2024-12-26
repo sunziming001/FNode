@@ -52,6 +52,7 @@
     <ClInclude Include="include\FNode\Core\StockPrePriceTask.h" />
     <ClInclude Include="include\FNode\UI\DividendFrame.h" />
     <ClInclude Include="include\FNode\UI\HoldersFrame.h" />
+    <ClInclude Include="resource.h" />
     <QtMoc Include="include\FNode\UI\StockPriceView.h" />
     <QtMoc Include="include\FNode\UI\DividendDetailFrame.h" />
     <QtMoc Include="include\FNode\UI\StockSearhFrame.h" />
@@ -73,6 +74,15 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(QTDIR)\bin\lrelease"  "%(FullPath)"  -qm "$(SolutionDir)$(Configuration)\%(Filename).qm"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).qm</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FNode.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="resource\Resource.qrc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ACA1CFE1-615F-4649-A025-AFA7829F7070}</ProjectGuid>

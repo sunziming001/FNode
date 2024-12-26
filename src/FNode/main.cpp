@@ -40,6 +40,7 @@ void test()
 int main(int argc, char** argv)
 {
 	QApplication app(argc, argv);
+	app.setWindowIcon(QIcon(":/image/coin.ico"));
 
 	QTranslator translator;
 	translator.load(QApplication::applicationDirPath() + "\\fnode_zh.qm");

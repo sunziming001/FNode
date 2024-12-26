@@ -157,10 +157,26 @@
     <ClInclude Include="include\FNode\Core\StockHoldersTask.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="fnode_zh.ts">
       <Filter>Translation Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FNode.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="resource\Resource.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
   </ItemGroup>
 </Project>
