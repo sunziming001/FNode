@@ -4,6 +4,23 @@
 #include <QString>
 #include <QList>
 #include <QPair>
+#include <QFlags>
+#include <functional>
+
+enum class KType
+{
+	Day = 0x01,
+	Week = 0x02,
+	Month = 0x04,
+	Season = 0x08,
+};
+Q_DECLARE_FLAGS(KTypes, KType)
+Q_DECLARE_OPERATORS_FOR_FLAGS(KTypes)
+
+void IterateKTypes(KTypes kTypes, std::function<void(KType)> onKType);
+QString KTypeToShortString(KType kType);
+
+
 class StockPrice
 {
 public:

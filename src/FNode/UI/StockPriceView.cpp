@@ -82,7 +82,7 @@ void StockPriceView::initCtrlLayout()
 	bgWeekMonth_.addButton(cbUseWeek_);
 	bgWeekMonth_.addButton(cbUseMonth_);
 	bgWeekMonth_.addButton(cbUseDay_);
-	bgWeekMonth_.setExclusive(true);
+	bgWeekMonth_.setExclusive(false);
 	
 
 	if (mainWnd)
@@ -124,7 +124,7 @@ void StockPriceView::startAnalysis()
 		for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 		{
 			QString stockId = *iter;
-			QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceById(stockId);
+			QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceById(stockId,KType::Day);
 			int indx = prices.size() - 1;
 			if(prices.size()==0)
 				continue;
@@ -246,77 +246,7 @@ void StockPriceView::startRank()
 void StockPriceView::getNegativeJ()
 {
 	getNegativeJThread_ = std::thread([this]() {
-		btnGetNegativeJ_->setEnabled(false);
-		QString fileName = "NegativeJ_Day";
-		if (isWeek())
-		{
-			fileName = "NegativeJ_Week_";
-		}
-		else if (isMonth())
-		{
-			fileName = "NegativeJ_Month_";
-		}
-		else if (isSeason())
-		{
-			fileName = "NegativeJ_Season_";
-		}
-
-		
-		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
-		fileName += ".txt";
-
-		emit sigClearOutput();
-		emit sigAppendOutput("start get negative J...");
-		emit sigAppendOutput("the smaller J the better.");
-		emit sigAppendOutput("the bigger market the better.");
-		emit sigAppendOutput("the bigger MaUpTrend the better.");
-		emit sigAppendOutput("changeRate not over 10%.");
-		QList<QString> stockList = StockDataBase::getInstance()->getStockList();
-		int matchCnt = 0;
-		int winCnt = 0;
-		for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
-		{
-			double maUpTrend = 0.0;
-			QString stockId = *iter;
-			QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceById(stockId);
-			QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(prices);
-			if (kdj.size() > 0)
-			{
-				double J = std::get<2>(kdj.last());
-				if (J < 0.0)
-				{
-					QList<double> sma20 = StockPrice::GetSMA20(prices);
-					double marketValue = prices.last().getMarketValue();
-					double changeRate = prices.last().getChangeRate();
-					QString output = *iter + " J: " + QString::number(J, 'f', 2)
-						+ ", market: " + QString::number(marketValue / 100000000.0, 'f', 2)
-						+ ", changeRate: " + QString::number(changeRate * 100, 'f', 2) + "%"
-						;
-					if (sma20.size() >= 2)
-					{
-						double last = sma20.last();
-						double prev = sma20.at(sma20.size() - 2);
-						maUpTrend = (last - prev) / prev;
-						output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
-					}
-
-					if (maUpTrend > 0.0
-						|| isMonth()
-						|| isWeek()
-						|| isSeason())
-					{
-						emit sigAppendOutput(output);
-					}
-						
-				}
-			}
-
-
-		}
-
-		emit sigAppendOutput("get negative J over");
-		emit sigSaveOutput(fileName);
-		btnGetNegativeJ_->setEnabled(true);
+		getNegativeJImp();
 	});
 	getNegativeJThread_.detach();
 }
@@ -339,6 +269,38 @@ void StockPriceView::setIsMonth(bool v)
 void StockPriceView::setIsSeason(bool v)
 {
 	cbUseSeason_->setChecked(v);
+}
+
+KTypes StockPriceView::getKTypes() const
+{
+	KTypes types;
+
+	if (this->isDay())
+	{
+		types |= (KType::Day);
+	}
+
+	if (this->isWeek())
+	{
+		types |= (KType::Week);
+	}
+
+	if (this->isMonth())
+	{
+		types |= (KType::Month);
+	}
+
+	if (this->isSeason())
+	{
+		types |= (KType::Season);
+	}
+
+	return types;
+}
+
+bool StockPriceView::isDay() const
+{
+	return cbUseDay_->isChecked();
 }
 
 bool StockPriceView::isWeek() const
@@ -386,7 +348,7 @@ QMap<QString, int> StockPriceView::getTopVolumeStock(const QDate& endDate, int d
 		QString dateString = curDate.toString("yyyy-MM-dd");
 		int retCnt = 0;
 		int trueRank = 0;
-		QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceByDate(dateString);
+		QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceByDate(dateString,KType::Day);
 		std::stable_sort(prices.begin(), prices.end(), [this](const StockPrice& p1, const StockPrice& p2)-> bool {
 			return p1.getVolume() > p2.getVolume();
 		});
@@ -420,4 +382,86 @@ QMap<QString, int> StockPriceView::getTopVolumeStock(const QDate& endDate, int d
 	}
 
 	return ret;
+}
+
+void StockPriceView::getNegativeJImp()
+{
+	btnGetNegativeJ_->setEnabled(false);
+	QString fileName = "NegativeJ_";
+	KTypes kTypes = getKTypes();
+	IterateKTypes(kTypes, [this, &fileName](KType kType) {
+		fileName += KTypeToShortString(kType);
+	});
+	fileName += "_";
+
+	fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
+	fileName += ".txt";
+
+	emit sigClearOutput();
+	emit sigAppendOutput("start get negative J...");
+	emit sigAppendOutput("the smaller J the better.");
+	emit sigAppendOutput("the bigger market the better.");
+	emit sigAppendOutput("the bigger MaUpTrend the better.");
+	emit sigAppendOutput("changeRate not over 10%.");
+	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	int matchCnt = 0;
+	int winCnt = 0;
+	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
+	{
+		QString stockId = *iter;
+		bool isFirst = true;
+		IterateKTypes(kTypes, [this, stockId,&isFirst](KType kType) {
+			procNegativeJ(stockId, kType,isFirst);
+		});
+
+
+	}
+
+	emit sigAppendOutput("get negative J over");
+	emit sigSaveOutput(fileName);
+	btnGetNegativeJ_->setEnabled(true);
+}
+
+void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isFirst)
+{
+	double maUpTrend = 0.0;
+	QList<StockPrice> price = StockDataBase::getInstance()->selectStockPriceById(stockId, kType);
+	QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(price);
+	if (kdj.size() > 0)
+	{
+		double J = std::get<2>(kdj.last());
+		if (J < 0.0)
+		{
+			QList<double> sma20 = StockPrice::GetSMA20(price);
+			double marketValue = price.last().getMarketValue();
+			double changeRate = price.last().getChangeRate();
+			QString output = stockId
+				+ " " + KTypeToShortString(kType)
+				+ " J: " + QString::number(J, 'f', 2)
+				+ ", market: " + QString::number(marketValue / 100000000.0, 'f', 2)
+				+ ", changeRate: " + QString::number(changeRate * 100, 'f', 2) + "%"
+				;
+			if (sma20.size() >= 2)
+			{
+				double last = sma20.last();
+				double prev = sma20.at(sma20.size() - 2);
+				maUpTrend = (last - prev) / prev;
+				output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
+			}
+
+			if (maUpTrend > 0.0
+				|| isMonth()
+				|| isWeek()
+				|| isSeason())
+			{
+				if (isFirst)
+				{
+					emit sigAppendOutput("=====");
+					isFirst = false;
+				}
+				emit sigAppendOutput(output);
+			}
+
+		}
+	}
 }

@@ -10,6 +10,7 @@
 #include <thread>
 #include <QCheckBox>
 #include <QButtonGroup>
+#include "StockPrice.h"
 
 class StockPriceView :public QFrame
 {
@@ -22,6 +23,8 @@ public:
 	void setIsWeek(bool v);
 	void setIsMonth(bool v);
 	void setIsSeason(bool v);
+	KTypes getKTypes()const;
+	bool isDay()const;
 	bool isWeek()const;
 	bool isMonth()const;
 	bool isSeason()const;
@@ -39,6 +42,8 @@ private:
 	void onAppendOutput(const QString& str);
 	void onSaveOutput(const QString& fileName);
 	QMap<QString, int> getTopVolumeStock(const QDate& endDate, int dayCnt, int outputCnt, double minChangeRate = 4.5, bool hasOutput = false);
+	void getNegativeJImp();
+	void procNegativeJ(const QString& stockId, KType kType, bool& isFirst);
 private:
 	QVBoxLayout* mainLayout_;
 	QHBoxLayout* ctrlLayout_;

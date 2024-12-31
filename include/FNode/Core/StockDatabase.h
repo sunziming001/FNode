@@ -27,11 +27,12 @@ public:
 	void clearStockPrePrice();
 	QMap<QString, StockPrePrice> selectAllStockPrePrice();
 
-	void clearStockPrice();
-	void insertStockPrice(const QList<StockPrice>& data);
-	bool hasStockPrice(const QString& stockId);
-	QList<StockPrice> selectStockPriceById(const QString& stockId);
-	QList<StockPrice> selectStockPriceByDate(const QString& date);
+	void clearStockPrice(KTypes ktypes);
+	void insertStockPrice(const QList<StockPrice>& data, KType kType);
+	bool hasStockPrice(const QString& stockId, KType kType);
+	QList<StockPrice> selectStockPriceById(const QString& stockId, KType kType);
+	QList<StockPrice> selectStockPriceByDate(const QString& date, KType kType);
+	QString getStockPriceTableName(KType type)const;
 private:
 	void initStockList();
 	void initDatabasFile();

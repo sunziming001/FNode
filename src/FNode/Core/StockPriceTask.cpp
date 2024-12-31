@@ -31,16 +31,16 @@ QString StockPriceTask::getPriceUrl() const
 
 	switch (kType_)
 	{
-	case StockPriceTask::KType::Day:
+	case KType::Day:
 		kTypeStr = "101";
 		break;
-	case StockPriceTask::KType::Week:
+	case KType::Week:
 		kTypeStr = "102";
 		break;
-	case StockPriceTask::KType::Month:
+	case KType::Month:
 		kTypeStr = "103";
 		break;
-	case StockPriceTask::KType::Season:
+	case KType::Season:
 		kTypeStr = "104";
 		break;
 	default:
@@ -68,7 +68,7 @@ void StockPriceTask::setKType(KType t)
 
 void StockPriceTask::onExecute()
 {
-	if (!StockDataBase::getInstance()->hasStockPrice(stockId_))
+	if (!StockDataBase::getInstance()->hasStockPrice(stockId_, kType_))
 	{
 		startQuest();
 	}
@@ -119,7 +119,7 @@ void StockPriceTask::startQuest()
 				}
 			}
 
-			StockDataBase::getInstance()->insertStockPrice(prices);
+			StockDataBase::getInstance()->insertStockPrice(prices, kType_);
 			notifyFinish();
 		}
 		else {

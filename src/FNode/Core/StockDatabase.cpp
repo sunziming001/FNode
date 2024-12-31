@@ -231,7 +231,7 @@ QMap<QString, StockPrePrice> StockDataBase::selectAllStockPrePrice()
 	return ret;
 }
 
-void StockDataBase::clearStockPrice()
+void StockDataBase::clearStockPrice(KTypes ktypes)
 {
 	if (!db_.open())
 	{
@@ -244,8 +244,12 @@ void StockDataBase::clearStockPrice()
 	sqlStr = "begin;";
 	query.exec(sqlStr);
 
-	sqlStr = "delete from tb_stock_price";
-	query.exec(sqlStr);
+	IterateKTypes(ktypes, [this, &query](KType kType) {
+		QString sql = "delete from %1";
+		QString tbName = this->getStockPriceTableName(kType);
+		QString sqlStr = sql.arg(tbName);
+		query.exec(sqlStr);
+	});	
 
 
 	sqlStr = "commit;";
@@ -255,7 +259,7 @@ void StockDataBase::clearStockPrice()
 	db_.close();
 }
 
-void StockDataBase::insertStockPrice(const QList<StockPrice>& data)
+void StockDataBase::insertStockPrice(const QList<StockPrice>& data, KType kType)
 {
 	if (!db_.open())
 	{
@@ -264,6 +268,7 @@ void StockDataBase::insertStockPrice(const QList<StockPrice>& data)
 	}
 
 	QSqlQuery query(db_);
+	QString tbName = getStockPriceTableName(kType);
 	QString sqlStr;
 
 	sqlStr = "begin;";
@@ -271,9 +276,10 @@ void StockDataBase::insertStockPrice(const QList<StockPrice>& data)
 
 	for (auto iter = data.begin(); iter != data.end(); iter++)
 	{
-		sqlStr = "insert into tb_stock_price(StockId, Date,OpenPrice,ClosePrice,HighPrice,LowPrice,TurnOver,Volume,ChangeRate)values('%1','%2', %3, %4, %5, %6, %7, %8, %9);";
+		sqlStr = "insert into %1(StockId, Date,OpenPrice,ClosePrice,HighPrice,LowPrice,TurnOver,Volume,ChangeRate)values('%2','%3', %4, %5, %6, %7, %8, %9, %10);";
 	
-		sqlStr = sqlStr.arg(iter->getStockId())
+		sqlStr = sqlStr.arg(tbName)
+			.arg(iter->getStockId())
 			.arg(iter->getDate())
 			.arg(iter->getOpenPrice())
 			.arg(iter->getClosePrice())
@@ -293,7 +299,8 @@ void StockDataBase::insertStockPrice(const QList<StockPrice>& data)
 	db_.close();
 }
 
-bool StockDataBase::hasStockPrice(const QString& stockId)
+
+bool StockDataBase::hasStockPrice(const QString& stockId, KType kType)
 {
 	bool ret = false;
 
@@ -305,8 +312,10 @@ bool StockDataBase::hasStockPrice(const QString& stockId)
 
 	QSqlQuery query(db_);
 	QString sqlStr;
-	sqlStr = "select StockId from tb_stock_price where StockId='%1';";
-	sqlStr = sqlStr.arg(stockId);
+	QString tbName = getStockPriceTableName(kType);
+	sqlStr = "select StockId from %1 where StockId='%2';";
+	sqlStr = sqlStr.arg(tbName)
+		.arg(stockId);
 
 	if (query.exec(sqlStr))
 	{
@@ -318,7 +327,7 @@ bool StockDataBase::hasStockPrice(const QString& stockId)
 	return ret;
 }
 
-QList<StockPrice> StockDataBase::selectStockPriceById(const QString& stockId)
+QList<StockPrice> StockDataBase::selectStockPriceById(const QString& stockId, KType kType)
 {
 	QList<StockPrice> ret;
 	if (!db_.open())
@@ -328,9 +337,11 @@ QList<StockPrice> StockDataBase::selectStockPriceById(const QString& stockId)
 	}
 	QSqlQuery query(db_);
 	QString sqlStr;
+	QString tbName = getStockPriceTableName(kType);
 
-	sqlStr = "select Date, OpenPrice, ClosePrice, HighPrice, LowPrice,TurnOver, Volume, ChangeRate from tb_stock_price where StockId='%1' order by Date;";
-	sqlStr = sqlStr.arg(stockId);
+	sqlStr = "select Date, OpenPrice, ClosePrice, HighPrice, LowPrice,TurnOver, Volume, ChangeRate from %1 where StockId='%2' order by Date;";
+	sqlStr = sqlStr.arg(tbName)
+		.arg(stockId);
 	if (query.exec(sqlStr))
 	{
 		while (query.next())
@@ -364,7 +375,7 @@ QList<StockPrice> StockDataBase::selectStockPriceById(const QString& stockId)
 	return ret;
 }
 
-QList<StockPrice> StockDataBase::selectStockPriceByDate(const QString& date)
+QList<StockPrice> StockDataBase::selectStockPriceByDate(const QString& date, KType kType)
 {
 	QList<StockPrice> ret;
 	if (!db_.open())
@@ -374,9 +385,11 @@ QList<StockPrice> StockDataBase::selectStockPriceByDate(const QString& date)
 	}
 	QSqlQuery query(db_);
 	QString sqlStr;
+	QString tbName = getStockPriceTableName(kType);
 
-	sqlStr = "select Date, OpenPrice, ClosePrice, HighPrice, LowPrice,TurnOver, Volume, ChangeRate,StockId from tb_stock_price where Date='%1';";
-	sqlStr = sqlStr.arg(date);
+	sqlStr = "select Date, OpenPrice, ClosePrice, HighPrice, LowPrice,TurnOver, Volume, ChangeRate,StockId from %1 where Date='%2';";
+	sqlStr = sqlStr.arg(tbName)
+		.arg(date);
 	if (query.exec(sqlStr))
 	{
 		while (query.next())
@@ -411,6 +424,31 @@ QList<StockPrice> StockDataBase::selectStockPriceByDate(const QString& date)
 	return ret;
 }
 
+QString StockDataBase::getStockPriceTableName(KType type) const
+{
+	QString ret;
+	switch (type)
+	{
+	case KType::Day:
+		ret = "tb_stock_price_d";
+		break;
+	case KType::Week:
+		ret = "tb_stock_price_w";
+		break;
+	case KType::Month:
+		ret = "tb_stock_price_m";
+		break;
+	case KType::Season:
+		ret = "tb_stock_price_s";
+		break;
+	default:
+		ret = "tb_stock_price_d";
+		break;
+	}
+
+	return ret;
+}
+
 void StockDataBase::initStockList()
 {
 	initFromStockListFile("sh_list.csv");
@@ -440,9 +478,22 @@ void StockDataBase::initDatabasFile()
 		query.exec("CREATE TABLE tb_stock_pre_price(ID integer PRIMARY KEY autoincrement, StockId varchar(20), PrePrice double);");
 		query.clear();
 
-		query.exec("CREATE TABLE tb_stock_price(ID integer PRIMARY KEY autoincrement, StockId varchar(20), Date varchar(12),\
+		query.exec("CREATE TABLE tb_stock_price_d(ID integer PRIMARY KEY autoincrement, StockId varchar(20), Date varchar(12),\
 			OpenPrice double, ClosePrice double, HighPrice double, LowPrice double, \
 			TurnOver double, Volume double, ChangeRate double);");
+
+		query.exec("CREATE TABLE tb_stock_price_w(ID integer PRIMARY KEY autoincrement, StockId varchar(20), Date varchar(12),\
+			OpenPrice double, ClosePrice double, HighPrice double, LowPrice double, \
+			TurnOver double, Volume double, ChangeRate double);");
+
+		query.exec("CREATE TABLE tb_stock_price_m(ID integer PRIMARY KEY autoincrement, StockId varchar(20), Date varchar(12),\
+			OpenPrice double, ClosePrice double, HighPrice double, LowPrice double, \
+			TurnOver double, Volume double, ChangeRate double);");
+
+		query.exec("CREATE TABLE tb_stock_price_s(ID integer PRIMARY KEY autoincrement, StockId varchar(20), Date varchar(12),\
+			OpenPrice double, ClosePrice double, HighPrice double, LowPrice double, \
+			TurnOver double, Volume double, ChangeRate double);");
+
 		query.clear();
 
 	}

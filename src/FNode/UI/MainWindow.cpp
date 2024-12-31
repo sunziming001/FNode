@@ -135,7 +135,6 @@ void MainWindow::onPriceTimeOut()
 	int hour = curDateTime.time().hour();
 	int minutes = curDateTime.time().minute();
 	bool isEndOfDay = (hour == 15 && minutes == 0);
-	bool isEndOfWeek = (dayOfWeek == 5)&& (hour == 16 && minutes == 0);
 
 	if (dayOfWeek > 5 || !cbAutoTask_->isChecked())
 	{
@@ -143,8 +142,7 @@ void MainWindow::onPriceTimeOut()
 	}
 		
 
-	if (isEndOfDay
-		|| isEndOfWeek)
+	if (isEndOfDay)
 	{
 		priceOnceConnect_ = new QMetaObject::Connection;
 			
@@ -158,7 +156,9 @@ void MainWindow::onPriceTimeOut()
 		},Qt::QueuedConnection);
 
 		priceFrame_->setIsDay(true);
-		priceFrame_->setIsWeek(isEndOfWeek);
+		priceFrame_->setIsWeek(true);
+		priceFrame_->setIsMonth(false);
+		priceFrame_->setIsSeason(false);
 		clearPrice();
 		startPrice();
 	}
@@ -260,42 +260,19 @@ void MainWindow::startPrice()
 	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 	{
 		QString stockId = *iter;
-		
-		StockPriceTask* tsk = new StockPriceTask(this);
-		tsk->setStockId(stockId);
-		if (priceFrame_->isWeek())
-		{
-			tsk->setKType(StockPriceTask::KType::Week);
-		}
-
-		if (priceFrame_->isMonth())
-		{
-			tsk->setKType(StockPriceTask::KType::Month);
-		}
-
-		if (priceFrame_->isSeason())
-		{
-			tsk->setKType(StockPriceTask::KType::Season);
-		}
-
-		totalTaskCnt_++;
-
-
-		connect(tsk, &StockPrePriceTask::finished, this, [this](bool isError, QString errStr) {
-			finishedTasksCnt_++;
-			if (isError)
-			{
-				QMessageBox::warning(this, tr("warning"), errStr);
-			}
-			freshProgress();
+		KTypes kTypes = priceFrame_->getKTypes();
+		IterateKTypes(kTypes, [this, stockId](KType kType) {
+			pushPriceTask(stockId, kType);
 		});
-		NetTaskManager::getInstance()->pushTask(tsk);
+		
+
 	}
 }
 
 void MainWindow::clearPrice()
 {
-	StockDataBase::getInstance()->clearStockPrice();
+	KTypes types = priceFrame_->getKTypes();
+	StockDataBase::getInstance()->clearStockPrice(types);
 }
 
 
@@ -351,4 +328,26 @@ void MainWindow::freshProgress()
 		}
 		
 	}
+}
+
+void MainWindow::pushPriceTask(const QString& stockId, KType kType)
+{
+
+	StockPriceTask* tsk = new StockPriceTask(this);
+	tsk->setStockId(stockId);
+	tsk->setKType(kType);
+	
+
+	totalTaskCnt_++;
+
+
+	connect(tsk, &StockPrePriceTask::finished, this, [this](bool isError, QString errStr) {
+		finishedTasksCnt_++;
+		if (isError)
+		{
+			QMessageBox::warning(this, tr("warning"), errStr);
+		}
+		freshProgress();
+		});
+	NetTaskManager::getInstance()->pushTask(tsk);
 }

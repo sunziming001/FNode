@@ -13,6 +13,7 @@
 #include <QButtonGroup>
 #include <QStackedLayout>
 #include <QTimer>
+#include "StockPrice.h"
 
 
 class StockSearchFrame;
@@ -51,6 +52,8 @@ private:
 	void initHolderFrame();
 	
 	void freshProgress();
+
+	void pushPriceTask(const QString& stockId, KType kType);
 private slots:
 	void onSwitchView(int id, bool checked);
 	void onPriceTimeOut();

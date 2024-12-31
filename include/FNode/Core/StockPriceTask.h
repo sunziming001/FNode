@@ -8,13 +8,7 @@
 class StockPriceTask :public AbstractNetTask
 {
 public:
-enum class KType
-{
-	Day,
-	Week,
-	Month,
-	Season,
-};
+
 public:
 	StockPriceTask(QObject* parent = nullptr);
 	~StockPriceTask();

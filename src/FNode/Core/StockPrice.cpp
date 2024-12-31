@@ -457,3 +457,54 @@ double StockPrice::getMarketValue() const
 {
 	return 1.0 / getChangeRate() * getVolume();
 }
+
+void IterateKTypes(KTypes kTypes, std::function<void(KType)> onKType)
+{
+	if (onKType)
+	{
+		if (kTypes & KType::Day)
+		{
+			onKType(KType::Day);
+		}
+
+		if (kTypes & KType::Week)
+		{
+			onKType(KType::Week);
+		}
+
+		if (kTypes & KType::Month)
+		{
+			onKType(KType::Month);
+		}
+
+		if (kTypes & KType::Season)
+		{
+			onKType(KType::Season);
+		}
+	}
+	
+}
+
+QString KTypeToShortString(KType kType)
+{
+	QString ret;
+	switch (kType)
+	{
+	case KType::Day:
+		ret = "D";
+		break;
+	case KType::Week:
+		ret = "W";
+		break;
+	case KType::Month:
+		ret = "M";
+		break;
+	case KType::Season:
+		ret = "S";
+		break;
+	default:
+		ret = "UK";
+		break;
+	}
+	return ret;
+}
