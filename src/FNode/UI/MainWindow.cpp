@@ -157,7 +157,7 @@ void MainWindow::onPriceTimeOut()
 
 		priceFrame_->setIsDay(true);
 		priceFrame_->setIsWeek(true);
-		priceFrame_->setIsMonth(false);
+		priceFrame_->setIsMonth(true);
 		priceFrame_->setIsSeason(false);
 		clearPrice();
 		startPrice();

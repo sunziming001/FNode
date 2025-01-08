@@ -456,10 +456,17 @@ void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isF
 			{
 				if (isFirst)
 				{
-					emit sigAppendOutput("=====");
+					QString fitKString;
+					IterateKTypes(outputedKTypes_, [&fitKString](KType k) {
+						fitKString+=KTypeToShortString(k);
+					});
+					emit sigAppendOutput("====="+fitKString);
 					isFirst = false;
+					outputedKTypes_ = KType::None;
 				}
+				outputedKTypes_ |= kType;
 				emit sigAppendOutput(output);
+				
 			}
 
 		}

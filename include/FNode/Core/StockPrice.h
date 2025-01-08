@@ -9,6 +9,7 @@
 
 enum class KType
 {
+	None = 0x00,
 	Day = 0x01,
 	Week = 0x02,
 	Month = 0x04,

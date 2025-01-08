@@ -64,7 +64,7 @@ private:
 
 	std::thread analysisThread_;
 	std::thread getNegativeJThread_;
-
+	KTypes outputedKTypes_;
 };
 
 
