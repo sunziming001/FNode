@@ -263,6 +263,96 @@ QList<std::tuple<double, double, double>> StockPrice::GetKDJ(const QList<StockPr
 }
 
 
+QList<int> StockPrice::GetBuy2Index(const QList<StockPrice>& source)
+{
+	QList<int> ret;
+	QList<StockPrice> peeks;
+	
+	int obWidth = 15;
+	int startIndex = obWidth;
+	
+	if (source.size() <= obWidth)
+	{
+		return ret;
+	}
+
+	for (int i = startIndex+1; i < source.length()-1; i++)
+	{
+		
+		int obStartIndex = i - obWidth;
+		if (isPriceBreak(source, i, obWidth))
+		{
+			ret.push_back(i);
+		}
+		
+		
+	}
+
+
+	return ret;
+}
+
+bool StockPrice::isPriceBreak(const QList<StockPrice>& source, int checkIndex, int obWidth)
+{
+	int obStartIndex = checkIndex-obWidth;
+	double averageVolume = 0.0;
+	double maxClose = 0.0;
+	bool isCloseOverAllPeek = true;
+	bool isPrevCloseOverAllPeek = true;
+	QList<StockPrice> peeks;
+	bool ret = false;
+	/*
+		1. 000625 2012/12/19 vol max in 20 day ,close is highest, after pre high 7 days
+		2. 600016 2012/12/5 vol max in 20 day ,close is highest, after pre high 4 days (next day vol retrun to average)
+		3. 000776 2024/7/31(next day vol 0.4~0.8) 2024/9/24(next day vol 1.2)
+		4. 600839 2024/10/14
+		5. 600056	2009/10/26
+	*/
+	if (source.size() <= checkIndex
+		|| obStartIndex < 0)
+	{
+		return ret;
+	}
+
+	for (int j = obStartIndex; j < checkIndex; j++)
+	{
+		StockPrice pre = source[j - 1];
+		StockPrice cur = source[j];
+		StockPrice next = source[j + 1];
+
+
+		if (cur.getClosePrice() > pre.getClosePrice()
+			&& cur.getClosePrice() > next.getClosePrice())
+		{
+			peeks.append(cur);
+
+			if (maxClose < cur.getClosePrice())
+			{
+				maxClose = cur.getClosePrice();
+			}
+		}
+
+		averageVolume += source[j].getVolume();
+	}
+	averageVolume = averageVolume / obWidth;
+	if (peeks.size() > 0)
+	{
+		auto& price = peeks.last();
+		isCloseOverAllPeek &= source[checkIndex].getClosePrice() > maxClose;
+		isPrevCloseOverAllPeek &= source[checkIndex - 1].getClosePrice() > maxClose;
+	}
+
+	if (isCloseOverAllPeek
+		&& !isPrevCloseOverAllPeek
+		&& peeks.size() > 0
+		&& averageVolume * 2.0 <= source[checkIndex].getVolume())
+	{
+		ret = true;
+	}
+
+	return ret;
+}
+
 int StockPrice::GetPrevValleyIndx(const QList<StockPrice>& source, unsigned int idx)
 {
 	int ret = -1;

@@ -19,6 +19,7 @@ public:
 	StockPriceView(QWidget* parent = nullptr);
 	~StockPriceView();
 	void getNegativeJ();
+	void getBuy2();
 	void setIsDay(bool v);
 	void setIsWeek(bool v);
 	void setIsMonth(bool v);
@@ -43,7 +44,9 @@ private:
 	void onSaveOutput(const QString& fileName);
 	QMap<QString, int> getTopVolumeStock(const QDate& endDate, int dayCnt, int outputCnt, double minChangeRate = 4.5, bool hasOutput = false);
 	void getNegativeJImp();
+	void getBuy2Imp();
 	void procNegativeJ(const QString& stockId, KType kType, bool& isFirst);
+	void procBuy2(const QString& stockId, bool& isFirst);
 private:
 	QVBoxLayout* mainLayout_;
 	QHBoxLayout* ctrlLayout_;
@@ -57,6 +60,7 @@ private:
 	QPushButton* btnClearPrice_;
 	QPushButton* btnAnalysis_;
 	QPushButton* btnGetNegativeJ_;
+	QPushButton* btnGetBuy2_;
 	QLineEdit* leDuration_;
 	QLineEdit* leDate_;
 	QPushButton* btnRank_;
@@ -64,6 +68,7 @@ private:
 
 	std::thread analysisThread_;
 	std::thread getNegativeJThread_;
+	std::thread getBuy2Thread_;
 	KTypes outputedKTypes_;
 };
 

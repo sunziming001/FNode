@@ -39,6 +39,8 @@ public:
 	static QList<double> GetK(const QList<StockPrice>& source);
 	static QList<std::pair<double,double>> GetKD(const QList<StockPrice>& source);
 	static QList<std::tuple<double,double,double>> GetKDJ(const QList<StockPrice>& source);
+	static QList<int> GetBuy2Index(const QList<StockPrice>& source);
+	static bool isPriceBreak(const QList<StockPrice>& source, int checkIndex, int obWidth);
 
 	static int GetPrevValleyIndx(const QList<StockPrice>& source, unsigned int idx);
 	static int GetPrevPeekIndx(const QList<StockPrice>& source, unsigned int idx);

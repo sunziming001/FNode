@@ -49,6 +49,7 @@ void StockPriceView::initCtrlLayout()
 	btnClearPrice_ = new QPushButton(tr("ClearPrice"), this);
 	btnAnalysis_ = new QPushButton(tr("Analysis"), this);
 	btnGetNegativeJ_ = new QPushButton(tr("NegativeJ"), this);
+	btnGetBuy2_ = new QPushButton(tr("Buy2"), this);
 
 	btnRank_ = new QPushButton(tr("Rank"), this);
 	leDuration_ = new QLineEdit(this);
@@ -70,6 +71,7 @@ void StockPriceView::initCtrlLayout()
 	ctrlLayout_->addWidget(btnClearPrice_);
 	ctrlLayout_->addWidget(btnAnalysis_);
 	ctrlLayout_->addWidget(btnGetNegativeJ_);
+	ctrlLayout_->addWidget(btnGetBuy2_);
 	ctrlLayout_->addSpacing(5);
 	ctrlLayout_->addWidget(leDate_);
 	ctrlLayout_->addWidget(leDuration_);
@@ -93,6 +95,8 @@ void StockPriceView::initCtrlLayout()
 	connect(btnAnalysis_, &QPushButton::clicked, this, &StockPriceView::startAnalysis);
 	connect(btnGetNegativeJ_, &QPushButton::clicked, this, &StockPriceView::getNegativeJ);
 	connect(btnRank_, &QPushButton::clicked, this, &StockPriceView::startRank);
+	connect(btnGetBuy2_, &QPushButton::clicked, this, &StockPriceView::getBuy2);
+	
 }
 
 void StockPriceView::initConsoleOutput()
@@ -249,6 +253,14 @@ void StockPriceView::getNegativeJ()
 		getNegativeJImp();
 	});
 	getNegativeJThread_.detach();
+}
+
+void StockPriceView::getBuy2()
+{
+	getBuy2Thread_ = std::thread([this]() {
+		getBuy2Imp();
+	});
+	getBuy2Thread_.detach();
 }
 
 void StockPriceView::setIsDay(bool v)
@@ -422,6 +434,29 @@ void StockPriceView::getNegativeJImp()
 	btnGetNegativeJ_->setEnabled(true);
 }
 
+void StockPriceView::getBuy2Imp()
+{
+	btnGetBuy2_->setEnabled(false);
+	QString fileName = "Buy2_";
+	fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
+	fileName += ".txt";
+	emit sigClearOutput();
+	emit sigAppendOutput("start get buy 2...");
+	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	int matchCnt = 0;
+	int winCnt = 0;
+	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
+	{
+		QString stockId = *iter;
+		bool isFirst = true;
+		procBuy2(stockId, isFirst);
+
+	}
+
+	emit sigSaveOutput(fileName);
+	btnGetBuy2_->setEnabled(true);
+}
+
 void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isFirst)
 {
 	double maUpTrend = 0.0;
@@ -470,5 +505,26 @@ void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isF
 			}
 
 		}
+	}
+}
+
+void StockPriceView::procBuy2(const QString& stockId, bool& isFirst)
+{
+	double maUpTrend = 0.0;
+	QList<StockPrice> price = StockDataBase::getInstance()->selectStockPriceById(stockId, KType::Day);
+	/*QList<int> breakIdxes = StockPrice::GetBuy2Index(price);
+	if (breakIdxes.size() > 0)
+	{
+		isFirst = false;
+		emit sigAppendOutput(stockId);
+		for (int i = 0; i < breakIdxes.size(); i++)
+		{
+			emit sigAppendOutput(price[breakIdxes[i]].getDate());
+		}
+	}*/
+	bool isPriceBreak = StockPrice::isPriceBreak(price, price.size() - 1, 15);
+	if (isPriceBreak)
+	{
+		emit sigAppendOutput(stockId+" breaked!!!");
 	}
 }
