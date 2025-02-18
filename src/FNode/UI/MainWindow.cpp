@@ -148,7 +148,7 @@ void MainWindow::onPriceTimeOut()
 			
 		*priceOnceConnect_=	connect(this, &MainWindow::sigTaskFinished, this, [this]() {
 
-			priceFrame_->getNegativeJ();
+			priceFrame_->getBuy2();
 
 			QObject::disconnect(*priceOnceConnect_);
 			delete priceOnceConnect_;
@@ -157,7 +157,7 @@ void MainWindow::onPriceTimeOut()
 
 		priceFrame_->setIsDay(true);
 		priceFrame_->setIsWeek(true);
-		priceFrame_->setIsMonth(true);
+		priceFrame_->setIsMonth(false);
 		priceFrame_->setIsSeason(false);
 		clearPrice();
 		startPrice();
