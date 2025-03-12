@@ -45,7 +45,7 @@ private:
 	QMap<QString, int> getTopVolumeStock(const QDate& endDate, int dayCnt, int outputCnt, double minChangeRate = 4.5, bool hasOutput = false);
 	void getNegativeJImp();
 	void getBuy2Imp();
-	void procNegativeJ(const QString& stockId, KType kType, bool& isFirst);
+	QString procNegativeJ(const QString& stockId, KType kType);
 	void procBuy2(const QString& stockId, bool& isFirst);
 private:
 	QVBoxLayout* mainLayout_;

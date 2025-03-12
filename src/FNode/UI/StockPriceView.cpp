@@ -421,9 +421,27 @@ void StockPriceView::getNegativeJImp()
 	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 	{
 		QString stockId = *iter;
-		bool isFirst = true;
-		IterateKTypes(kTypes, [this, stockId,&isFirst](KType kType) {
-			procNegativeJ(stockId, kType,isFirst);
+		KTypes procedTypes = KType::None;
+		KTypes fitTypes = KType::None;
+		IterateKTypes(kTypes, [this, stockId, &procedTypes, &fitTypes, kTypes](KType kType) {
+			procedTypes |= kType;
+			QString str = procNegativeJ(stockId, kType);
+			if (!str.isEmpty())
+			{
+				fitTypes |= kType;
+				emit sigAppendOutput(str);
+			}
+
+			if (!fitTypes.testFlag(KType::None)
+				&& procedTypes == kTypes)
+			{
+				QString fitKString;
+				IterateKTypes(fitTypes, [&fitKString](KType k) {
+					fitKString += KTypeToShortString(k);
+				});
+				emit sigAppendOutput("=====" + fitKString);
+			}
+
 		});
 
 
@@ -457,9 +475,9 @@ void StockPriceView::getBuy2Imp()
 	btnGetBuy2_->setEnabled(true);
 }
 
-void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isFirst)
+QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 {
-	double maUpTrend = 0.0;
+	QString ret;
 	QList<StockPrice> price = StockDataBase::getInstance()->selectStockPriceById(stockId, kType);
 	QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(price);
 	if (kdj.size() > 0)
@@ -467,8 +485,28 @@ void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isF
 		double marketValue = price.last().getMarketValue();
 		double changeRate = price.last().getChangeRate();
 		double J = std::get<2>(kdj.last());
-		if ( ((kType==KType::Day && J <= -8.0)|| (kType != KType::Day && J<0.0))
-			&& marketValue>= 200*100000000.0
+		bool isMinJ = true;
+		if (kdj.size() > 60)
+		{
+			for (auto iter = kdj.end()-60;
+				iter != kdj.end();
+				iter++)
+			{
+				double curJ = std::get<2>(*iter);
+				if (curJ >= J)
+				{
+					isMinJ = false;
+					break;
+				}
+			}
+		}
+		else {
+			isMinJ = false;
+		}
+		
+
+		if ( ((kType==KType::Day && J <= -8.0)|| (kType != KType::Day && J<0.0) || isMinJ)
+			&& marketValue>= 1*100000000.0
 			)
 		{
 			QList<double> sma20 = StockPrice::GetSMA20(price);
@@ -478,36 +516,13 @@ void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isF
 				+ ", market: " + QString::number(marketValue / 100000000.0, 'f', 2)
 				+ ", changeRate: " + QString::number(changeRate * 100, 'f', 2) + "%"
 				;
-			/*if (sma20.size() >= 2)
-			{
-				double last = sma20.last();
-				double prev = sma20.at(sma20.size() - 2);
-				maUpTrend = (last - prev) / prev;
-				output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
-			}*/
 
-			if (maUpTrend > 0.0
-				|| isMonth()
-				|| isWeek()
-				|| isSeason())
-			{
-				if (isFirst)
-				{
-					QString fitKString;
-					IterateKTypes(outputedKTypes_, [&fitKString](KType k) {
-						fitKString+=KTypeToShortString(k);
-					});
-					emit sigAppendOutput("====="+fitKString);
-					isFirst = false;
-					outputedKTypes_ = KType::None;
-				}
-				outputedKTypes_ |= kType;
-				emit sigAppendOutput(output);
-				
-			}
-
+			ret = output;
 		}
+
+		
 	}
+	return ret;
 }
 
 void StockPriceView::procBuy2(const QString& stockId, bool& isFirst)
