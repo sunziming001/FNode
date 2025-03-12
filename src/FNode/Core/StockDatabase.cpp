@@ -246,9 +246,12 @@ void StockDataBase::clearStockPrice(KTypes ktypes)
 
 	IterateKTypes(ktypes, [this, &query](KType kType) {
 		QString sql = "delete from %1";
+		QString seqSql = "delete from sqlite_sequence where name='%1';";
 		QString tbName = this->getStockPriceTableName(kType);
 		QString sqlStr = sql.arg(tbName);
+		QString seqSqlStr = seqSql.arg(tbName);
 		query.exec(sqlStr);
+		query.exec(seqSqlStr);
 	});	
 
 

@@ -148,7 +148,7 @@ void MainWindow::onPriceTimeOut()
 			
 		*priceOnceConnect_=	connect(this, &MainWindow::sigTaskFinished, this, [this]() {
 
-			priceFrame_->getBuy2();
+			priceFrame_->getNegativeJ();
 
 			QObject::disconnect(*priceOnceConnect_);
 			delete priceOnceConnect_;

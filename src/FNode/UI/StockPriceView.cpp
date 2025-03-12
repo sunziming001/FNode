@@ -464,25 +464,27 @@ void StockPriceView::procNegativeJ(const QString& stockId, KType kType,bool& isF
 	QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(price);
 	if (kdj.size() > 0)
 	{
+		double marketValue = price.last().getMarketValue();
+		double changeRate = price.last().getChangeRate();
 		double J = std::get<2>(kdj.last());
-		if (J < 0.0)
+		if ( ((kType==KType::Day && J <= -8.0)|| (kType != KType::Day && J<0.0))
+			&& marketValue>= 200*100000000.0
+			)
 		{
 			QList<double> sma20 = StockPrice::GetSMA20(price);
-			double marketValue = price.last().getMarketValue();
-			double changeRate = price.last().getChangeRate();
 			QString output = stockId
 				+ " " + KTypeToShortString(kType)
 				+ " J: " + QString::number(J, 'f', 2)
 				+ ", market: " + QString::number(marketValue / 100000000.0, 'f', 2)
 				+ ", changeRate: " + QString::number(changeRate * 100, 'f', 2) + "%"
 				;
-			if (sma20.size() >= 2)
+			/*if (sma20.size() >= 2)
 			{
 				double last = sma20.last();
 				double prev = sma20.at(sma20.size() - 2);
 				maUpTrend = (last - prev) / prev;
 				output += ", MaUpTrend: " + QString::number(maUpTrend * 100, 'f', 2) + "%";
-			}
+			}*/
 
 			if (maUpTrend > 0.0
 				|| isMonth()
