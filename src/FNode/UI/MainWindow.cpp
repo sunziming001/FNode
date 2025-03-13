@@ -44,6 +44,8 @@ void MainWindow::initUI()
 	initDividendFrame();
 	initPriceFrame();
 	initHolderFrame();
+
+	initTrayIcon();
 }
 
 void MainWindow::initTimers()
@@ -105,6 +107,28 @@ void MainWindow::initHolderFrame()
 {
 	holderFrame_ = new HoldersFrame(this);
 	stackedLayout_->addWidget(holderFrame_);
+}
+
+void MainWindow::initTrayIcon()
+{
+	QAction* showAction = nullptr;
+	QAction* hideAction = nullptr;
+	trayIcon_ = new QSystemTrayIcon(QIcon(":/image/coin.ico"), this);
+
+	trayIconMenu_ = new QMenu();
+	showAction = trayIconMenu_->addAction(tr("show"));
+	hideAction = trayIconMenu_->addAction(tr("hide"));
+
+	trayIcon_->setContextMenu(trayIconMenu_);
+	trayIcon_->show();
+
+	connect(showAction, &QAction::triggered, this, [this]() {
+		this->show();
+	});
+
+	connect(hideAction, &QAction::triggered, this, [this]() {
+		this->hide();
+	});
 }
 
 void MainWindow::onSwitchView(int id, bool checked)

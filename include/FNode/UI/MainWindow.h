@@ -13,6 +13,8 @@
 #include <QButtonGroup>
 #include <QStackedLayout>
 #include <QTimer>
+#include <QSystemTrayIcon>
+#include <QMenu>
 #include "StockPrice.h"
 
 
@@ -50,7 +52,7 @@ private:
 	void initDividendFrame();
 	void initPriceFrame();
 	void initHolderFrame();
-	
+	void initTrayIcon();
 	void freshProgress();
 
 	void pushPriceTask(const QString& stockId, KType kType);
@@ -82,12 +84,15 @@ private:
 	DividendFrame* dividendFrame_ = nullptr;
 	StockPriceView* priceFrame_= nullptr;
 	HoldersFrame* holderFrame_ = nullptr;
+	QSystemTrayIcon* trayIcon_ = nullptr;
+	QMenu* trayIconMenu_ = nullptr;
 
 	int totalTaskCnt_ = 0;
 	int finishedTasksCnt_ = 0;
 
 	QTimer priceTimer_;
 	QMetaObject::Connection* priceOnceConnect_=nullptr;
+	
 };
 
 #endif
