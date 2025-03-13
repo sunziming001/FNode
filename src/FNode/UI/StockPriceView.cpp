@@ -506,7 +506,7 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 		
 
 		if ( ((kType==KType::Day && J <= -8.0)|| (kType != KType::Day && J<0.0) || isMinJ)
-			&& marketValue>= 1*100000000.0
+			&& marketValue>= 200*100000000.0
 			)
 		{
 			QList<double> sma20 = StockPrice::GetSMA20(price);
