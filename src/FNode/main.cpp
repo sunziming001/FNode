@@ -10,11 +10,11 @@ void test()
 {
 	QMap<QString,StockDividend> sds =StockDataBase::getInstance()->selectAllStockDividend(2021);
 	QMap<QString, StockPrePrice> sps =StockDataBase::getInstance()->selectAllStockPrePrice();
-	QList<QString> stockIds = StockDataBase::getInstance()->getStockList();
+	QList<StockBrief> stockIds = StockDataBase::getInstance()->getStockList();
 	QList<StockDividend> ret;
 	for (auto iter = stockIds.begin(); iter != stockIds.end(); iter++)
 	{
-		QString stockId = *iter;
+		QString stockId = iter->id;
 		if (sps.find(stockId) == sps.end()
 			|| sds.find(stockId) == sds.end())
 		{

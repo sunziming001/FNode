@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget* parent)
 	:QFrame(parent)
 {
 	this->setWindowFlags(Qt::Window);
+	initSettings();
 	initUI();
 	initTimers();
 }
@@ -28,16 +29,24 @@ MainWindow::~MainWindow()
 
 }
 
+void MainWindow::initSettings()
+{
+	settings_ = new QSettings("config.ini",QSettings::IniFormat, this);
+	settings_->beginGroup("proxy");
+	proxyHost_ = settings_->value("host").toString();
+	proxyPort_ = settings_->value("port").toUInt();
+	settings_->endGroup();
+}
+
 void MainWindow::initUI()
 {
 	mainLayout_ = new QVBoxLayout();
-	cbAutoTask_ = new QCheckBox(tr("Auto"), this);
 	this->setLayout(mainLayout_);
 
-	mainLayout_->addWidget(cbAutoTask_);
-	cbAutoTask_->setChecked(true);
 
+	initSettingLayout();
 	initTabLayout();
+	
 	initStackedLayout();
 	initProgressLayout();
 
@@ -56,6 +65,22 @@ void MainWindow::initTimers()
 	connect(&priceTimer_, &QTimer::timeout, this, &MainWindow::onPriceTimeOut);
 
 	priceTimer_.start();
+}
+
+void MainWindow::initSettingLayout()
+{
+	settingLayout_ = new QHBoxLayout();
+
+	cbAutoTask_ = new QCheckBox(tr("Auto"), this);
+	cbUseProxy_ = new QCheckBox(tr("Proxy"), this);
+
+	settingLayout_->addWidget(cbAutoTask_);
+	settingLayout_->addWidget(cbUseProxy_);
+	settingLayout_->addStretch(1);
+
+	mainLayout_->addLayout(settingLayout_);
+
+	cbAutoTask_->setChecked(true);
 }
 
 void MainWindow::initTabLayout()
@@ -113,12 +138,13 @@ void MainWindow::initTrayIcon()
 {
 	QAction* showAction = nullptr;
 	QAction* hideAction = nullptr;
+	QAction* exitAction = nullptr;
 	trayIcon_ = new QSystemTrayIcon(QIcon(":/image/coin.ico"), this);
 
 	trayIconMenu_ = new QMenu();
 	showAction = trayIconMenu_->addAction(tr("show"));
 	hideAction = trayIconMenu_->addAction(tr("hide"));
-
+	exitAction = trayIconMenu_->addAction(tr("exit"));
 	trayIcon_->setContextMenu(trayIconMenu_);
 	trayIcon_->show();
 
@@ -128,6 +154,10 @@ void MainWindow::initTrayIcon()
 
 	connect(hideAction, &QAction::triggered, this, [this]() {
 		this->hide();
+	});
+
+	connect(exitAction, &QAction::triggered, this, [this]() {
+		this->close();
 	});
 }
 
@@ -180,7 +210,7 @@ void MainWindow::onPriceTimeOut()
 		},Qt::QueuedConnection);
 
 		priceFrame_->setIsDay(true);
-		priceFrame_->setIsWeek(true);
+		priceFrame_->setIsWeek(false);
 		priceFrame_->setIsMonth(false);
 		priceFrame_->setIsSeason(false);
 		clearPrice();
@@ -207,10 +237,10 @@ void MainWindow::startCrawel(int year)
 
 	if (year > 0)
 	{
-		QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+		QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
 		for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 		{
-			QString stockId = *iter;
+			QString stockId = iter->id;
 			StockDividend sd;
 			sd.setStockId(stockId);
 			sd.setReportYear(year);
@@ -243,10 +273,10 @@ void MainWindow::startPrePrice()
 		return;
 	}
 
-	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
 	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 	{
-		QString stockId = *iter;
+		QString stockId = iter->id;
 		StockPrePrice sp;
 		sp.setStockId(stockId);
 		StockPrePriceTask* tsk = new StockPrePriceTask(this);
@@ -280,11 +310,17 @@ void MainWindow::startPrice()
 		return;
 	}
 
-	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
 	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 	{
-		QString stockId = *iter;
+		QString stockId = iter->id;
 		KTypes kTypes = priceFrame_->getKTypes();
+		if (iter->market <= 110.0 * 100000000
+			&& iter->market>0.0)
+		{
+			continue;
+		}
+
 		IterateKTypes(kTypes, [this, stockId](KType kType) {
 			pushPriceTask(stockId, kType);
 		});
@@ -308,10 +344,10 @@ void MainWindow::startCrawelHolders()
 		return;
 	}
 
-	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
 	for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
 	{
-		QString stockId = *iter;
+		QString stockId = iter->id;
 
 		StockHoldersTask* tsk = new StockHoldersTask(this);
 		StockHolders holders;
@@ -360,8 +396,11 @@ void MainWindow::pushPriceTask(const QString& stockId, KType kType)
 	StockPriceTask* tsk = new StockPriceTask(this);
 	tsk->setStockId(stockId);
 	tsk->setKType(kType);
-	
-
+	tsk->setUrlSource(StockPriceTask::UrlSource::EastMoney);
+	if (cbUseProxy_->isChecked())
+	{
+		tsk->setSocks5Proxy(proxyHost_, proxyPort_);
+	}
 	totalTaskCnt_++;
 
 
@@ -372,6 +411,19 @@ void MainWindow::pushPriceTask(const QString& stockId, KType kType)
 			QMessageBox::warning(this, tr("warning"), errStr);
 		}
 		freshProgress();
-		});
+	});
 	NetTaskManager::getInstance()->pushTask(tsk);
+}
+
+void MainWindow::closeEvent(QCloseEvent* e)
+{
+	if (this->isVisible())
+	{
+		this->hide();
+		e->ignore();
+	}
+	else {
+		e->accept();
+	}
+	
 }

@@ -56,7 +56,7 @@ void StockSearchFrame::onSearchClicked()
 {
 	int year = leYear_->text().toInt();
 	double expPerfitRate = leExpPrefitRate_->text().toDouble();
-	QList<QString> stockList = StockDataBase::getInstance()->getStockList();
+	QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
 	QMap<QString, StockDividend> sds = StockDataBase::getInstance()->selectAllStockDividend(year);
 	QMap<QString, StockDividend> sdsOld = StockDataBase::getInstance()->selectAllStockDividend(year-1);
 	QMap<QString, StockPrePrice> sps = StockDataBase::getInstance()->selectAllStockPrePrice();
@@ -66,7 +66,7 @@ void StockSearchFrame::onSearchClicked()
 		iter++)
 	{
 		StockSearchRowData rowData;
-		QString stockId = *iter;
+		QString stockId = iter->id;
 		if (sps.find(stockId) == sps.end()
 			|| sds.find(stockId) == sds.end()
 			|| sdsOld.find(stockId) == sdsOld.end())

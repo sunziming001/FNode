@@ -25,6 +25,7 @@ public:
 	void notifyFinish(bool isError = false, QString errInfo = QString());
 	void setKType(KType t);
 	void setUrlSource(UrlSource src);
+	void setSocks5Proxy(const QString& host, quint16 port);
 private:
 	void onExecute()override;
 
@@ -43,6 +44,9 @@ private:
 	QNetworkReply* priceReply_ = nullptr;
 	KType kType_ = KType::Day;
 	UrlSource urlSource_ = UrlSource::Baidu;
+
+	QString proxyHost_;
+	quint16 proxyPort_=0;
 };
 
 

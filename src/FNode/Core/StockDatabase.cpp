@@ -2,6 +2,8 @@
 #include <QFileInfo>
 #include <QSqlQuery>
 #include <QVariant>
+#include <QTextStream>
+#include <QDebug>
 
 StockDataBase* StockDataBase::instance=nullptr;
 
@@ -116,9 +118,9 @@ QMap<QString,StockDividend> StockDataBase::selectAllStockDividend(int year)
 	return ret;
 }
 
-QList<QString> StockDataBase::getStockList() const
+QList<StockBrief> StockDataBase::getStockList() const
 {
-	return stockList_;
+	return stockList_.toList();
 }
 
 bool StockDataBase::hasStockPrePrice(const QString& stockId)
@@ -299,6 +301,12 @@ void StockDataBase::insertStockPrice(const QList<StockPrice>& data, KType kType)
 	sqlStr = "commit;";
 	query.exec(sqlStr);
 
+	
+	double market= data.last().getVolume() * 10000 /data.last().getChangeRate();
+	StockBrief b;
+	b.id = data.last().getStockId();
+	b.market = data.last().getMarketValue();
+	updateStockMarket(b);
 	db_.close();
 }
 
@@ -452,10 +460,50 @@ QString StockDataBase::getStockPriceTableName(KType type) const
 	return ret;
 }
 
+void StockDataBase::saveStockBrief()
+{
+	QString filename = "StockBrief.dat";
+	QFile file(filename);
+	if (file.open(QIODevice::ReadWrite))
+	{
+		QTextStream stream(&file);
+		stream.setCodec("UTF-8");
+		for (auto brief : stockList_)
+		{
+			stream << brief.id << "," << brief.name << "," << brief.market << "\n";
+		}
+	}
+}
+
+void StockDataBase::loadStockBrief()
+{
+	QString filename = "StockBrief.dat";
+	QFile file(filename);
+	if (file.open(QIODevice::ReadOnly))
+	{
+		do {
+			QString line = QString::fromUtf8(file.readLine());
+			QStringList items = line.split(",");
+			StockBrief sb;
+			if (items.size() >= 3)
+			{
+				sb.id = items[0];
+				sb.name = items[1];
+				sb.market = items[2].toDouble();
+			}
+			
+
+			updateStockMarket(sb);
+		} while (!file.atEnd());
+	}
+}
+
 void StockDataBase::initStockList()
 {
 	initFromStockListFile("sh_list.csv");
 	initFromStockListFile("sz_list.csv");
+	loadStockBrief();
+
 }
 
 void StockDataBase::initDatabasFile()
@@ -525,12 +573,15 @@ void StockDataBase::initFromStockListFile(const char* fileName)
 	{
 		char buff[200] = { 0 };
 
-		while (fgets(buff, 200, fp))
+		while (fgets(buff, 400, fp))
 		{
-			QString id = buff;
+			StockBrief brief;
+			QString line = QString::fromUtf8(buff);
+			QStringList items= line.split(",");
+			QString id = items[0];
 			bool isOk = false;
 			id.toInt(&isOk);
-			if (isOk)
+			if (isOk && items.size()>=2)
 			{
 				id = id.trimmed();
 				if (id.length() < 6)
@@ -540,7 +591,11 @@ void StockDataBase::initFromStockListFile(const char* fileName)
 						id = "0" + id;
 					}
 				}
-				stockList_.append(id);
+				brief.id = id;
+				
+				brief.name = items[1];
+				brief.market = -1.0;
+				stockList_.insert(brief);
 			}
 
 			memset(buff, 0, 200);
@@ -548,4 +603,33 @@ void StockDataBase::initFromStockListFile(const char* fileName)
 
 		fclose(fp);
 	}
+}
+
+void StockDataBase::updateStockMarket(const StockBrief& brief)
+{
+	auto iter = stockList_.find(brief);
+	if (iter != stockList_.end())
+	{
+		StockBrief e;
+		e.id = brief.id;
+		e.name = iter->name;
+		e.market = brief.market;
+
+		stockList_.erase(iter);
+		stockList_.insert(e);
+		
+	}
+}
+
+
+bool _StockBrief::operator==(const _StockBrief& other) const
+{
+	return this->id == other.id;
+}
+
+
+
+uint qHash(const StockBrief& key, uint seed)
+{
+	return qHash(key.id, seed) ;
 }

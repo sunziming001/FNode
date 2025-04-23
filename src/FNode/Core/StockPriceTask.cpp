@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QNetworkProxy>
 
 QString StockPriceTask::PriceUrlFormat_EastMoney="https://16.push2his.eastmoney.com/api/qt/stock/kline/get?secid=%s.%s&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=%s&fqt=1&end=20500101&lmt=120&_=1686031957995";
 //ref https://quote.eastmoney.com/sh600839.html
@@ -62,6 +63,12 @@ void StockPriceTask::setUrlSource(UrlSource src)
 	urlSource_ = src;
 }
 
+void StockPriceTask::setSocks5Proxy(const QString& host, quint16 port)
+{
+	proxyHost_ = host;
+	proxyPort_ = port;
+}
+
 void StockPriceTask::onExecute()
 {
 	if (!StockDataBase::getInstance()->hasStockPrice(stockId_, kType_))
@@ -80,6 +87,16 @@ void StockPriceTask::startQuest()
 	req.setUrl(url);
 
 	QNetworkAccessManager* mgr = NetTaskManager::getInstance()->getNetworkAccessManager();
+	QNetworkProxy proxy;
+	if (!proxyHost_.isEmpty())
+	{
+		proxy.setType(QNetworkProxy::Socks5Proxy);
+		proxy.setHostName(proxyHost_);
+		proxy.setPort(proxyPort_);
+		mgr->setProxy(proxy);
+	}
+	
+
 	priceReply_ = mgr->get(req);
 
 	connect(priceReply_, &QNetworkReply::finished, this, [this]() {
