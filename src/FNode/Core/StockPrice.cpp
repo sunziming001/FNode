@@ -1,6 +1,6 @@
 #include "StockPrice.h"
 #include <QDebug>
-
+#include <float.h>
 StockPrice::StockPrice()
 {
 
@@ -15,9 +15,9 @@ StockPrice::~StockPrice()
 double StockPrice::GetMA(const QList<StockPrice>& source, unsigned int idx, unsigned int dur)
 {
 	double ret = 0.0;
-	int startIdx = idx - dur+1;
+	int startIdx = idx - dur;
 	int endIdx = idx;
-	double volSum = 0.0;
+	double priceSum = 0.0;
 	double turnOverSum = 0.0;
 	if (startIdx >= 0 
 		&& endIdx < source.size()
@@ -25,11 +25,10 @@ double StockPrice::GetMA(const QList<StockPrice>& source, unsigned int idx, unsi
 	{
 		for (int i = startIdx; i != endIdx; i++)
 		{
-			volSum += source[i].getVolume();
-			turnOverSum += source[i].getTurnOver();
+			priceSum += source[i].getClosePrice();
 		}
 
-		ret = volSum / turnOverSum/100.0;
+		ret = priceSum / dur;
 	}
 
 	return ret;
@@ -150,6 +149,94 @@ double StockPrice::GetSumChangeRate(const QList<StockPrice>& source, unsigned in
 		{
 			ret += source[i].getChangeRate();
 		}
+	}
+
+	return ret;
+}
+
+QList<double> StockPrice::GetMainForceRate(const QList<StockPrice>& source)
+{
+	QList<double> ret;
+	double mainForceVolume = 0.0;
+	double minVolume = DBL_MAX;
+	double maxVolume = DBL_MIN;
+
+	for (int i =0; i<source.size();i++)
+	{
+		double curVolume = source[i].getVolume();
+		double vma5 = StockPrice::GetVMA(source, i, 5);
+		double market = source[i].getMarketValue();
+		double curMainForceRate = 0.0;
+		if (i > 5)
+		{
+			if (curVolume > vma5)
+			{
+				curMainForceRate = ((curVolume * 0.2) + (curVolume - vma5) * 0.8) / market;
+
+			}
+			else {
+				curMainForceRate = curVolume * 0.2 / market;
+			}
+		}
+
+
+		if (source[i].getClosePrice() < StockPrice::GetMA(source,i,5))
+		{
+			mainForceVolume += curMainForceRate;
+		}
+		else {
+			mainForceVolume -= curMainForceRate;
+		}
+
+
+		ret.append(mainForceVolume);
+
+		if (mainForceVolume < minVolume)
+		{
+			minVolume = mainForceVolume;
+		}
+
+		if (mainForceVolume > maxVolume)
+		{
+			maxVolume = mainForceVolume;
+		}
+	}
+
+	for (int i = 0; i < ret.size(); i++)
+	{
+		double v = (ret[i] - minVolume) / (maxVolume - minVolume);
+		ret[i] = v;
+		if (i < 5)
+		{
+			ret[i] = 0.0;
+		}
+	}
+
+	return ret;
+}
+
+QList<double> StockPrice::GetPriceRate(const QList<StockPrice>& source)
+{
+	QList<double> ret;
+	double minPrice = DBL_MAX;
+	double maxPrice = DBL_MIN;
+	for (int i = 0; i < source.size(); i++)
+	{
+		if (minPrice > source[i].getClosePrice())
+		{
+			minPrice = source[i].getClosePrice();
+		}
+		if (maxPrice < source[i].getClosePrice())
+		{
+			maxPrice = source[i].getClosePrice();
+		}
+		ret.append(source[i].getClosePrice());
+	}
+
+	for (int i = 0; i < ret.size(); i++)
+	{
+		double v = (ret[i] - minPrice) / (maxPrice - minPrice);
+		ret[i] = v;
 	}
 
 	return ret;

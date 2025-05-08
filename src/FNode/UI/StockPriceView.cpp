@@ -3,6 +3,8 @@
 #include "StockDatabase.h"
 #include <QDateTime>
 #include <QDir>
+#include "StockPrice.h"
+#include "StockQueryWindow.h"
 
 StockPriceView::StockPriceView(QWidget* parent /*= nullptr*/)
 	:QFrame(parent)
@@ -47,9 +49,9 @@ void StockPriceView::initCtrlLayout()
 	cbUseSeason_ = new QCheckBox(tr("Season"), this);
 
 	btnClearPrice_ = new QPushButton(tr("ClearPrice"), this);
-	btnAnalysis_ = new QPushButton(tr("Analysis"), this);
 	btnGetNegativeJ_ = new QPushButton(tr("NegativeJ"), this);
 	btnGetBuy2_ = new QPushButton(tr("Buy2"), this);
+	btnQuery_ = new QPushButton(tr("Query"), this);
 
 	btnRank_ = new QPushButton(tr("Rank"), this);
 	leDuration_ = new QLineEdit(this);
@@ -69,9 +71,9 @@ void StockPriceView::initCtrlLayout()
 	ctrlLayout_->addWidget(cbUseMonth_);
 	ctrlLayout_->addWidget(cbUseSeason_);
 	ctrlLayout_->addWidget(btnClearPrice_);
-	ctrlLayout_->addWidget(btnAnalysis_);
 	ctrlLayout_->addWidget(btnGetNegativeJ_);
 	ctrlLayout_->addWidget(btnGetBuy2_);
+	ctrlLayout_->addWidget(btnQuery_);
 	ctrlLayout_->addSpacing(5);
 	ctrlLayout_->addWidget(leDate_);
 	ctrlLayout_->addWidget(leDuration_);
@@ -92,7 +94,7 @@ void StockPriceView::initCtrlLayout()
 		connect(btnCrawlPrice_, &QPushButton::clicked, mainWnd, &MainWindow::startPrice);
 		connect(btnClearPrice_, &QPushButton::clicked, mainWnd, &MainWindow::clearPrice);
 	}
-	connect(btnAnalysis_, &QPushButton::clicked, this, &StockPriceView::startAnalysis);
+	connect(btnQuery_, &QPushButton::clicked, this, &StockPriceView::popupQueryWindow);
 	connect(btnGetNegativeJ_, &QPushButton::clicked, this, &StockPriceView::getNegativeJ);
 	connect(btnRank_, &QPushButton::clicked, this, &StockPriceView::startRank);
 	connect(btnGetBuy2_, &QPushButton::clicked, this, &StockPriceView::getBuy2);
@@ -111,87 +113,6 @@ void StockPriceView::initConsoleOutput()
 	connect(this, &StockPriceView::sigSaveOutput, this, &StockPriceView::onSaveOutput, Qt::QueuedConnection);
 }
 
-void StockPriceView::startAnalysis()
-{
-	
-	analysisThread_ = std::thread([this]() {
-		btnAnalysis_->setEnabled(false);
-		QString fileName = "analysis_";
-		fileName += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh");
-		fileName += ".txt";
-		emit sigClearOutput();
-
-		emit sigAppendOutput("start analysis...");
-		QList<StockBrief> stockList = StockDataBase::getInstance()->getStockList();
-		int matchCnt = 0;
-		int winCnt = 0;
-		for (auto iter = stockList.begin(); iter != stockList.end(); iter++)
-		{
-			QString stockId = iter->id;
-			QList<StockPrice> prices = StockDataBase::getInstance()->selectStockPriceById(stockId,KType::Day);
-			int indx = prices.size() - 1;
-			if(prices.size()==0)
-				continue;
-			
-			int watchDur = 10;
-			bool needHistory = false;
-			do
-			{
-				bool isAroundMa = true;
-				float highest = 0.0;
-				float lowest = 0.0;
-				double sumChangeRate = StockPrice::GetSumChangeRate(prices, indx, 10);
-				const StockPrice& curPrice = prices[indx];
-
-				for (int i = 0; i < watchDur; i++)
-				{
-					const StockPrice& tempPrice = prices[indx - i];
-					double cur_ma_10 = StockPrice::GetMA(prices, indx - i, watchDur);
-
-					if (tempPrice.getLowPrice() >=cur_ma_10)
-					{
-						isAroundMa = false;
-						break;
-					}
-
-					if (highest < tempPrice.getHighPrice())
-					{
-						highest = tempPrice.getHighPrice();
-					}
-
-					if (lowest == 0.0 || lowest > tempPrice.getLowPrice())
-					{
-						lowest = tempPrice.getLowPrice();
-					}
-
-				}
-
-
-				if (isAroundMa && sumChangeRate > 100 && highest<=1.15*lowest)
-				{
-					QString str = curPrice.getStockId()
-						+ " h/l: " + QString::number(highest/lowest)
-						+ " volume: " + QString::number(curPrice.getVolume()/(curPrice.getChangeRate()/100.0))
-						+ " date: " + curPrice.getDate()
-						+ " change rate sum: " + QString::number(sumChangeRate);
-					emit sigAppendOutput(str);
-					needHistory = true;
-
-				}
-				indx--;
-				if(!needHistory)
-					break;
-			} while (indx>=60);
-
-			
-			
-		}
-		emit sigAppendOutput("analysis over");
-		emit sigSaveOutput(fileName);
-		btnAnalysis_->setEnabled(true);
-	});
-	analysisThread_.detach();
-}
 
 void StockPriceView::startRank()
 {
@@ -480,6 +401,8 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 {
 	QString ret;
 	QList<StockPrice> price = StockDataBase::getInstance()->selectStockPriceById(stockId, kType);
+	QList<double> priceRate = StockPrice::GetPriceRate(price);
+
 	QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(price);
 	if (kdj.size() > 0)
 	{
@@ -506,6 +429,7 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 		}
 		
 
+
 		if ( ((kType==KType::Day && J <= -8.0)|| (kType != KType::Day && J<0.0) || isMinJ)
 			&& marketValue>= 100*100000000.0
 			)
@@ -521,7 +445,6 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 			ret = output;
 		}
 
-		
 	}
 	return ret;
 }
@@ -545,4 +468,13 @@ void StockPriceView::procBuy2(const QString& stockId, bool& isFirst)
 	{
 		emit sigAppendOutput(stockId+" breaked!!!");
 	}
+}
+
+void StockPriceView::popupQueryWindow()
+{
+	StockQueryWindow* wnd = new StockQueryWindow(this);
+	IterateKTypes(getKTypes(), [wnd](KType kType) {
+		wnd->setKType(kType);
+	});
+	wnd->show();
 }

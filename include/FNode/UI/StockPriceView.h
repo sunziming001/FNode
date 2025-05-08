@@ -38,7 +38,6 @@ private:
 	void initCtrlLayout();
 	void initConsoleOutput();
 
-	void startAnalysis();
 	void startRank();
 	void onAppendOutput(const QString& str);
 	void onSaveOutput(const QString& fileName);
@@ -47,6 +46,8 @@ private:
 	void getBuy2Imp();
 	QString procNegativeJ(const QString& stockId, KType kType);
 	void procBuy2(const QString& stockId, bool& isFirst);
+
+	void popupQueryWindow();
 private:
 	QVBoxLayout* mainLayout_;
 	QHBoxLayout* ctrlLayout_;
@@ -58,9 +59,9 @@ private:
 	QCheckBox* cbUseMonth_;
 	QCheckBox* cbUseSeason_;
 	QPushButton* btnClearPrice_;
-	QPushButton* btnAnalysis_;
 	QPushButton* btnGetNegativeJ_;
 	QPushButton* btnGetBuy2_;
+	QPushButton* btnQuery_;
 	QLineEdit* leDuration_;
 	QLineEdit* leDate_;
 	QPushButton* btnRank_;

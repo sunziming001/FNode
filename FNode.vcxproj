@@ -37,6 +37,7 @@
     <ClCompile Include="src\FNode\UI\HoldersFrame.cpp" />
     <ClCompile Include="src\FNode\UI\MainWindow.cpp" />
     <ClCompile Include="src\FNode\UI\StockPriceView.cpp" />
+    <ClCompile Include="src\FNode\UI\StockQueryWindow.cpp" />
     <ClCompile Include="src\FNode\UI\StockSearhFrame.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +53,7 @@
     <ClInclude Include="include\FNode\Core\StockPrePriceTask.h" />
     <ClInclude Include="include\FNode\UI\DividendFrame.h" />
     <ClInclude Include="include\FNode\UI\HoldersFrame.h" />
+    <ClInclude Include="include\FNode\UI\StockQueryWindow.h" />
     <ClInclude Include="resource.h" />
     <QtMoc Include="include\FNode\UI\StockPriceView.h" />
     <QtMoc Include="include\FNode\UI\DividendDetailFrame.h" />
