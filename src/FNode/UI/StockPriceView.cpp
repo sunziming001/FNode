@@ -402,7 +402,7 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 	QString ret;
 	QList<StockPrice> price = StockDataBase::getInstance()->selectStockPriceById(stockId, kType);
 	QList<double> priceRate = StockPrice::GetPriceRate(price);
-
+	QList<double> mainForceRate = StockPrice::GetMainForceRate(price);
 	QList<std::tuple<double, double, double>> kdj = StockPrice::GetKDJ(price);
 	if (kdj.size() > 0)
 	{
@@ -443,6 +443,16 @@ QString StockPriceView::procNegativeJ(const QString& stockId, KType kType)
 				;
 
 			ret = output;
+		}
+
+		if (mainForceRate.last() - priceRate.last() >= 0.75)
+		{
+			if (!ret.isEmpty())
+			{
+				ret += "\n";
+			}
+			ret += stockId;
+			ret += " strong main force " + QString::number(mainForceRate.last() - priceRate.last(), 'f', 2);
 		}
 
 	}
